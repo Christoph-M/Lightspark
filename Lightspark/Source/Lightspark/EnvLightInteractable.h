@@ -11,7 +11,6 @@ class LIGHTSPARK_API AEnvLightInteractable : public ALightInteractable
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+public:
+	AEnvLightInteractable();
 };

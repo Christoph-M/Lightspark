@@ -2,6 +2,7 @@
 
 #include "Lightspark.h"
 #include "LightsparkCharacter.h"
+#include "LightInteractable.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ALightsparkCharacter
@@ -45,6 +46,12 @@ ALightsparkCharacter::ALightsparkCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+}
+
+void ALightsparkCharacter::BeginPlay() {
+	Super::BeginPlay();
+
+	InteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &ALightsparkCharacter::EvaluateLightInteraction);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -129,5 +136,15 @@ void ALightsparkCharacter::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
+	}
+}
+
+void ALightsparkCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
+	ALightInteractable* const TestInteractable = Cast<ALightInteractable>(OtherActor);
+
+	UE_LOG(LogClass, Log, TEXT("Actor: %s; Component: %s"), *OtherActor->GetName(), *OtherComp->GetName());
+
+	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
+		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 	}
 }

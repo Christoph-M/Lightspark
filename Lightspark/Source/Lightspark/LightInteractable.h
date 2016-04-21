@@ -7,8 +7,8 @@
 
 UENUM(BlueprintType)
 enum class EInteractionState {
-	Lit,
 	Unlit,
+	Lit,
 	Destroyed,
 	Unknown
 };

@@ -22,6 +22,8 @@ class ALightsparkCharacter : public ACharacter
 public:
 	ALightsparkCharacter();
 
+	virtual void BeginPlay() override;
+
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseTurnRate;
@@ -60,6 +62,9 @@ protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
+
+	UFUNCTION(BlueprintPure, Category = "LightInteractable", meta = (BlueprintProtected = "true"))
+	void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 public:
 	/** Returns CameraBoom subobject **/

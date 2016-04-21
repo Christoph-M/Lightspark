@@ -10,7 +10,9 @@ ALightInteractable::ALightInteractable()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	InteractableMesh = CreateAbstractDefaultSubobject<UStaticMeshComponent>(TEXT("InteractionMesh"));
+	SetCurrentState(EInteractionState::Unlit);
+
+	InteractableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InteractionMesh"));
 	RootComponent = InteractableMesh;
 }
 
@@ -27,4 +29,3 @@ void ALightInteractable::Tick( float DeltaTime )
 	Super::Tick( DeltaTime );
 
 }
-

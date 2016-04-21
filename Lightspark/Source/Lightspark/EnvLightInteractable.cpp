@@ -4,5 +4,6 @@
 #include "EnvLightInteractable.h"
 
 
-
-
+AEnvLightInteractable::AEnvLightInteractable() {
+	
+}
