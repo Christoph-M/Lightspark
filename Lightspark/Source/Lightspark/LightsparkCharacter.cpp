@@ -20,6 +20,8 @@ ALightsparkCharacter::ALightsparkCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	GetCapsuleComponent()->ComponentTags.Add(TEXT("Player"));
+
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
@@ -36,6 +38,10 @@ ALightsparkCharacter::ALightsparkCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->AttachTo(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionRange"));
+	InteractionSphere->AttachTo(RootComponent);
+	InteractionSphere->SetSphereRadius(200.0f);
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
