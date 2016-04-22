@@ -30,11 +30,29 @@ public:
 
 
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return InteractableMesh; }
+	FORCEINLINE class UPointLightComponent* GetLight() const { return PointLight; }
 
 
 	UFUNCTION(BlueprintPure, Category = "LightInteractable")
 	EInteractionState GetCurrentState() { return CurrentState; }
-	void SetCurrentState(EInteractionState state) { CurrentState = state; }
+	void ChangeState(EInteractionState newState);
+
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StateChangeLit();
+	virtual void StateChangeLit_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StateChangeUnlit();
+	virtual void StateChangeUnlit_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StateChangeDestroyed();
+	virtual void StateChangeDestroyed_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StateChangeUnknown();
+	virtual void StateChangeUnknown_Implementation();
 
 protected:
 	EInteractionState CurrentState;
@@ -42,4 +60,7 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* InteractableMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
+	class UPointLightComponent* PointLight;
 };

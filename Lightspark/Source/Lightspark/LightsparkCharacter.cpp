@@ -11,17 +11,18 @@ ALightsparkCharacter::ALightsparkCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	GetCapsuleComponent()->ComponentTags.Add(TEXT("Player"));
 
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
+	interactionRadius = 200.0f;
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
-	GetCapsuleComponent()->ComponentTags.Add(TEXT("Player"));
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -42,7 +43,8 @@ ALightsparkCharacter::ALightsparkCharacter()
 
 	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionRange"));
 	InteractionSphere->AttachTo(RootComponent);
-	InteractionSphere->SetSphereRadius(200.0f);
+	InteractionSphere->SetSphereRadius(interactionRadius);
+	InteractionSphere->ComponentTags.Add(TEXT("Light"));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -146,5 +148,7 @@ void ALightsparkCharacter::EvaluateLightInteraction(class AActor* OtherActor, cl
 
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
+
+		TestInteractable->ChangeState(EInteractionState::Lit);
 	}
 }

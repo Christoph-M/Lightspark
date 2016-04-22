@@ -10,10 +10,14 @@ ALightInteractable::ALightInteractable()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	SetCurrentState(EInteractionState::Unlit);
+	CurrentState = EInteractionState::Unlit;
 
 	InteractableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InteractionMesh"));
 	RootComponent = InteractableMesh;
+
+	PointLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight"));
+	PointLight->AttachTo(RootComponent);
+	PointLight->SetVisibility(false);
 }
 
 // Called when the game starts or when spawned
@@ -28,4 +32,40 @@ void ALightInteractable::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 
+}
+
+void ALightInteractable::ChangeState(EInteractionState newState) {
+	if (CurrentState != newState) {
+		if (CurrentState != EInteractionState::Destroyed) {
+			CurrentState = newState;
+
+			if (CurrentState == EInteractionState::Lit) {
+				StateChangeLit();
+			} else if (CurrentState == EInteractionState::Unlit) {
+				StateChangeUnlit();
+			} else if (CurrentState == EInteractionState::Destroyed) {
+				StateChangeDestroyed();
+			} else {
+				StateChangeUnknown();
+			}
+		} else {
+			
+		}
+	}
+}
+
+void ALightInteractable::StateChangeLit_Implementation() {
+	UE_LOG(LogClass, Log, TEXT("%s was lit."), *this->GetName());
+}
+
+void ALightInteractable::StateChangeUnlit_Implementation() {
+	UE_LOG(LogClass, Log, TEXT("%s was unlit."), *this->GetName());
+}
+
+void ALightInteractable::StateChangeDestroyed_Implementation() {
+	UE_LOG(LogClass, Log, TEXT("%s was destroyed."), *this->GetName());
+}
+
+void ALightInteractable::StateChangeUnknown_Implementation() {
+	UE_LOG(LogClass, Warning, TEXT("Unknown State."));
 }

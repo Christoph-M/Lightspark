@@ -63,7 +63,7 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	UFUNCTION(BlueprintPure, Category = "LightInteractable", meta = (BlueprintProtected = "true"))
+	UFUNCTION()
 	void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 public:
@@ -72,5 +72,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE class USphereComponent* GetInsteractionSphere() const { return InteractionSphere; }
-};
 
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (BlueprintProtected = "true"))
+	float interactionRadius;
+};
