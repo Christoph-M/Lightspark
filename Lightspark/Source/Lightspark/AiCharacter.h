@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "GameFramework/Character.h"
+#include "LightsparkCharacter.h"
 #include "AiCharacter.generated.h"
 
 UCLASS()
-class LIGHTSPARK_API AAiCharacter : public ACharacter
+class LIGHTSPARK_API AAiCharacter : public ALightsparkCharacter
 {
 	GENERATED_BODY()
 
@@ -22,8 +22,4 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
-
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (BlueprintProtected = "true"))
-	float interactionRadius;
 };

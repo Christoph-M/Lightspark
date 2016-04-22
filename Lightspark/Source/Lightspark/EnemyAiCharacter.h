@@ -16,13 +16,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	FORCEINLINE class USphereComponent* GetInsteractionSphere() const { return InteractionSphere; }
-
 private:
 	UFUNCTION()
-	void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
-
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
-	class USphereComponent* InteractionSphere;
+	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;
 };

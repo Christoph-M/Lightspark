@@ -7,8 +7,9 @@
 
 UENUM(BlueprintType)
 enum class EInteractionState {
-	Unlit,
+	Default,
 	Lit,
+	Unlit,
 	Destroyed,
 	Unknown
 };
@@ -37,6 +38,10 @@ public:
 	EInteractionState GetCurrentState() { return CurrentState; }
 	void ChangeState(EInteractionState newState);
 
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StateChangeDefault();
+	virtual void StateChangeDefault_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void StateChangeLit();

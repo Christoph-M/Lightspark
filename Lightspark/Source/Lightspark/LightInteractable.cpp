@@ -10,7 +10,7 @@ ALightInteractable::ALightInteractable()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	CurrentState = EInteractionState::Unlit;
+	CurrentState = EInteractionState::Default;
 
 	InteractableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InteractionMesh"));
 	RootComponent = InteractableMesh;
@@ -24,6 +24,7 @@ ALightInteractable::ALightInteractable()
 void ALightInteractable::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	
 }
 
@@ -39,7 +40,9 @@ void ALightInteractable::ChangeState(EInteractionState newState) {
 		if (CurrentState != EInteractionState::Destroyed) {
 			CurrentState = newState;
 
-			if (CurrentState == EInteractionState::Lit) {
+			if (CurrentState == EInteractionState::Default) {
+				StateChangeDefault();
+			} else if (CurrentState == EInteractionState::Lit) {
 				StateChangeLit();
 			} else if (CurrentState == EInteractionState::Unlit) {
 				StateChangeUnlit();
@@ -52,6 +55,10 @@ void ALightInteractable::ChangeState(EInteractionState newState) {
 			
 		}
 	}
+}
+
+void ALightInteractable::StateChangeDefault_Implementation() {
+	UE_LOG(LogClass, Log, TEXT("%s is in default state."), *this->GetName());
 }
 
 void ALightInteractable::StateChangeLit_Implementation() {
