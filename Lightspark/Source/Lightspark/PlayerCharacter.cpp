@@ -12,14 +12,22 @@ APlayerCharacter::APlayerCharacter() {
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
+	baseWalkSpeed = 600.0f;
+	maxSprintSpeed = 1200.0f;
+	decelerationFactor = 1500.0f;
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	isSprinting = false;
+	JumpKeyHoldTime = 0.0f;
+
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
@@ -43,6 +51,12 @@ void APlayerCharacter::BeginPlay() {
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
 }
 
+void APlayerCharacter::Tick(float deltaTime) {
+	Super::Tick(deltaTime);
+
+	CheckSprintInput(deltaTime);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -52,6 +66,9 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	check(InputComponent);
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
+	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
 
 	InputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
@@ -125,6 +142,33 @@ void APlayerCharacter::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
+	}
+}
+
+void APlayerCharacter::StartSprinting() {
+	isSprinting = true;
+	UE_LOG(LogClass, Log, TEXT("Started sprinting"));
+	sprintKeyHoldTime = 0.0f;
+}
+
+void APlayerCharacter::StopSprinting() {
+	isSprinting = false;
+	UE_LOG(LogClass, Log, TEXT("Stopped sprinting. Hold time: %f"), sprintKeyHoldTime);
+	sprintKeyHoldTime = 0.0f;
+}
+
+void APlayerCharacter::CheckSprintInput(float deltaTime) {
+	float* maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
+
+	const bool startedSprinting = sprintKeyHoldTime == 0.0f &&  isSprinting;
+	const bool stoppedSprinting = *maxWalkSpeed > baseWalkSpeed && !isSprinting;
+
+	if (isSprinting) {
+		sprintKeyHoldTime += deltaTime;
+
+		if (startedSprinting) *maxWalkSpeed = maxSprintSpeed;
+	} else if (stoppedSprinting) {
+		*maxWalkSpeed = (*maxWalkSpeed < baseWalkSpeed) ? baseWalkSpeed : *maxWalkSpeed - (deltaTime * decelerationFactor);
 	}
 }
 
