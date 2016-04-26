@@ -31,6 +31,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	float GetCurrentEnergy() { return characterEnergy; }
+
 protected:
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
@@ -64,6 +66,8 @@ protected:
 
 	void CheckSprintInput(float deltaTime);
 
+	void Decelerate(float deltaTime, float* maxWalkSpeed);
+
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
@@ -80,16 +84,55 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float initialEnergy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float energyNeededForRune;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float baseWalkSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float maxSprintSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float decelerationFactor;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	float sprintDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	float exhaustedDuration;
+
 private:
+	UPROPERTY(VisibleAnywhere, Category = "Energy")
+	float characterEnergy;
+
+	UPROPERTY(VisibleAnywhere, Category = "Energy")
+	int32 characterRunes;
+
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	bool isSprinting;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
+	bool isExhausted;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	float sprintKeyHoldTime;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
+	float exhaustedTime;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
+	float maxSprintEnergy;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
+	float sprintEnergy;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
+	float sprintEnergyConsume;
 };
