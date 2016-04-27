@@ -85,54 +85,117 @@ public:
 	float BaseLookUpRate;
 
 protected:
+	/**
+	* Initial Energy (float)
+	* How much energy the character has at start
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float initialEnergy;
 
+	/**
+	* Energy Needed For Rune (float)
+	* How much energy is needed to fill a rune
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float energyNeededForRune;
 
 
+	/**
+	* Base Walk Speed (float)
+	* How fast the character walks
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float baseWalkSpeed;
 
+	/**
+	* Max Sprint Speed (float)
+	* The maximum sprint speed the character can achieve
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float maxSprintSpeed;
 
+	/**
+	* Deceleration Factor (float)
+	* How fast the character decelerates down to the base walk speed
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float decelerationFactor;
 
+	/**
+	* Sprint Duration (float)
+	* For how long the character can sprint
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float sprintDuration;
 
+	/**
+	* Exhausted Duration (float)
+	* For how long the character can't sprint after sprint energy is fully depleted
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float exhaustedDuration;
 
 private:
+	/**
+	* Character Energy (float)
+	* How much energy the character currently has
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Energy")
 	float characterEnergy;
 
+	/**
+	* Character Runes (int32)
+	* How many runes the character currently has
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Energy")
 	int32 characterRunes;
 
-
+	/**
+	* Is Sprinting (bool)
+	* Is the character currently sprinting
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	bool isSprinting;
 
+	/**
+	* Is Exhausted (bool)
+	* Is the character currently exhausted
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	bool isExhausted;
 
+	/**
+	* Sprint Key Hold Time (float)
+	* How long the sprint key has been held
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	float sprintKeyHoldTime;
 
+	/**
+	* Exhausted Time (float)
+	* For how long the character has been exhausted
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	float exhaustedTime;
 
+	/**
+	* Max Sprint Energy (float)
+	* Maximum sprint energy
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
 	float maxSprintEnergy;
 
+	/**
+	* Sprint Energy (float)
+	* How much sprint energy the character currently has
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
 	float sprintEnergy;
 
+	/**
+	* Sprint Energy Consume (float)
+	* Sprint energy consumption calculated from Sprint Duration
+	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
 	float sprintEnergyConsume;
 };
