@@ -18,7 +18,7 @@ APlayerCharacter::APlayerCharacter() {
 	characterRunes = characterEnergy / energyNeededForRune;
 
 	baseWalkSpeed = 600.0f;
-	maxSprintSpeed = 1200.0f;
+	sprintSpeedFactor = 50.0f;
 	decelerationFactor = 1500.0f;
 	sprintDuration = 4.0f;
 	exhaustedDuration = 3.0f;
@@ -59,6 +59,7 @@ APlayerCharacter::APlayerCharacter() {
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 	sprintEnergyConsume = maxSprintEnergy / sprintDuration;
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);

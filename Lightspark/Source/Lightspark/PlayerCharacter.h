@@ -108,11 +108,11 @@ protected:
 	float baseWalkSpeed;
 
 	/**
-	* Max Sprint Speed (float)
-	* The maximum sprint speed the character can achieve
+	* Sprint Speed Factor (float)
+	* Speed increase (in percent) for sprint
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
-	float maxSprintSpeed;
+	float sprintSpeedFactor;
 
 	/**
 	* Deceleration Factor (float)
@@ -149,6 +149,13 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere, Category = "Energy")
 	int32 characterRunes;
+
+	/**
+	* Max Sprint Speed (float)
+	* The maximum sprint speed the character can achieve
+	*/
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
+	float maxSprintSpeed;
 
 	/**
 	* Is Sprinting (bool)
