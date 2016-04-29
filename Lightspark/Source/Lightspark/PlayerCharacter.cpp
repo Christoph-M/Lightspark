@@ -12,10 +12,7 @@ APlayerCharacter::APlayerCharacter() {
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
-	initialEnergy = 50.0f;
 	energyNeededForRune = 50.0f;
-	characterEnergy = initialEnergy;
-	characterRunes = characterEnergy / energyNeededForRune;
 
 	baseWalkSpeed = 600.0f;
 	sprintSpeedFactor = 50.0f;
@@ -23,7 +20,6 @@ APlayerCharacter::APlayerCharacter() {
 	sprintDuration = 4.0f;
 	exhaustedDuration = 3.0f;
 	maxSprintEnergy = 100.0f;
-	sprintEnergy = maxSprintEnergy;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -38,7 +34,6 @@ APlayerCharacter::APlayerCharacter() {
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
@@ -59,8 +54,12 @@ APlayerCharacter::APlayerCharacter() {
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	characterRunes = characterEnergy / energyNeededForRune;
+
+	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 	sprintEnergyConsume = maxSprintEnergy / sprintDuration;
+	sprintEnergy = maxSprintEnergy;
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
 }
@@ -172,36 +171,39 @@ void APlayerCharacter::StopSprinting() {
 }
 
 void APlayerCharacter::CheckSprintInput(float deltaTime) {
-	float* maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
+	if (true) {
+		float* maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
 
-	const bool startedSprinting = sprintKeyHoldTime == 0.0f &&  isSprinting;
-	const bool ranOutOfEnergy = sprintEnergy == 0.0f && isSprinting;
-	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed || sprintEnergy == 0.0f) && !isSprinting;
+		const bool startedSprinting = sprintKeyHoldTime == 0.0f &&  isSprinting;
+		const bool ranOutOfEnergy = sprintEnergy == 0.0f && isSprinting;
+		const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed || sprintEnergy == 0.0f) && !isSprinting;
 
-	if (!isExhausted) {
-		if (isSprinting && sprintEnergy > 0.0f) {
-			sprintKeyHoldTime += deltaTime;
+		if (!isExhausted) {
+			if (isSprinting && sprintEnergy > 0.0f && !GetVelocity().IsZero()) {
+				sprintKeyHoldTime += deltaTime;
 
-			sprintEnergy = maxSprintEnergy - (sprintKeyHoldTime * sprintEnergyConsume);
-			if (sprintEnergy < 0.0f) { sprintEnergy = 0.0f; isExhausted = true; }
+				sprintEnergy = maxSprintEnergy - (sprintKeyHoldTime * sprintEnergyConsume);
+				if (sprintEnergy < 0.0f) { sprintEnergy = 0.0f; isExhausted = true; }
 
-			UE_LOG(LogClass, Log, TEXT("SprintEnergy: %f"), sprintEnergy);
+				UE_LOG(LogClass, Log, TEXT("SprintEnergy: %f"), sprintEnergy);
 
-			if (startedSprinting) *maxWalkSpeed = maxSprintSpeed;
+				if (startedSprinting) *maxWalkSpeed = maxSprintSpeed;
+			}
+			else if (stoppedSprinting || ranOutOfEnergy) {
+				Decelerate(deltaTime, maxWalkSpeed);
+
+				if (*maxWalkSpeed == baseWalkSpeed && stoppedSprinting) sprintEnergy = maxSprintEnergy;
+			}
 		}
-		else if (stoppedSprinting || ranOutOfEnergy) {
-			Decelerate(deltaTime, maxWalkSpeed);
+		else {
+			exhaustedTime += deltaTime;
 
-			if (*maxWalkSpeed == baseWalkSpeed && stoppedSprinting) sprintEnergy = maxSprintEnergy;
+			if (*maxWalkSpeed > baseWalkSpeed) Decelerate(deltaTime, maxWalkSpeed);
+
+			UE_LOG(LogClass, Log, TEXT("ExhaustedTime: %f"), exhaustedTime);
+
+			if (exhaustedTime >= exhaustedDuration) { exhaustedTime = 0.0f; isExhausted = false; }
 		}
-	} else {
-		exhaustedTime += deltaTime;
-
-		if (*maxWalkSpeed > baseWalkSpeed) Decelerate(deltaTime, maxWalkSpeed);
-
-		UE_LOG(LogClass, Log, TEXT("ExhaustedTime: %f"), exhaustedTime);
-
-		if (exhaustedTime >= exhaustedDuration) { exhaustedTime = 0.0f; isExhausted = false; }
 	}
 }
 

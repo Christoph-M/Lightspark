@@ -19,6 +19,10 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+
+	/** Returns current Character Energy */
+	UFUNCTION(BlueprintPure, Category = "Energy")
+	virtual float GetCurrentCharacterEnergy() const { return characterEnergy; }
 	
 protected:
 	UFUNCTION()
@@ -28,6 +32,24 @@ public:
 	FORCEINLINE class USphereComponent* GetInteractionSphere() const { return InteractionSphere; }
 
 protected:
+	/**
+	* Initial Energy (float)
+	* How much energy the character has at start
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float initialEnergy;
+
+	/**
+	* Character Energy (float)
+	* How much energy the character currently has
+	*/
+	UPROPERTY(VisibleAnywhere, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float characterEnergy;
+
+	/*
+	* Interaction Radius (float)
+	* The radius the character can interact with other objects in
+	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Meta = (BlueprintProtected = "true"))
 	float interactionRadius;
 };

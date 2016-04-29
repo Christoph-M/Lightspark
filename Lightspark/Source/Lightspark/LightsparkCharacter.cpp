@@ -13,9 +13,10 @@ ALightsparkCharacter::ALightsparkCharacter()
 
 	interactionRadius = 200.0f;
 
+	initialEnergy = 50.0f;
+
 	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionRange"));
 	InteractionSphere->AttachTo(RootComponent);
-	InteractionSphere->SetSphereRadius(interactionRadius);
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -23,6 +24,10 @@ ALightsparkCharacter::ALightsparkCharacter()
 
 void ALightsparkCharacter::BeginPlay() {
 	Super::BeginPlay();
+
+	InteractionSphere->SetSphereRadius(interactionRadius);
+
+	characterEnergy = initialEnergy;
 
 	InteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &ALightsparkCharacter::EvaluateLightInteraction);
 }

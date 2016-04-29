@@ -31,8 +31,6 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	float GetCurrentEnergy() { return characterEnergy; }
-
 protected:
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
@@ -86,13 +84,6 @@ public:
 
 protected:
 	/**
-	* Initial Energy (float)
-	* How much energy the character has at start
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
-	float initialEnergy;
-
-	/**
 	* Energy Needed For Rune (float)
 	* How much energy is needed to fill a rune
 	*/
@@ -136,13 +127,6 @@ protected:
 	float exhaustedDuration;
 
 private:
-	/**
-	* Character Energy (float)
-	* How much energy the character currently has
-	*/
-	UPROPERTY(VisibleAnywhere, Category = "Energy")
-	float characterEnergy;
-
 	/**
 	* Character Runes (int32)
 	* How many runes the character currently has
