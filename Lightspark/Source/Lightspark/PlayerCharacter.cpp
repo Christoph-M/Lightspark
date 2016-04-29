@@ -171,44 +171,46 @@ void APlayerCharacter::StopSprinting() {
 }
 
 void APlayerCharacter::CheckSprintInput(float deltaTime) {
-	if (true) {
-		float* maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
+	float* maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
 
-		const bool startedSprinting = sprintKeyHoldTime == 0.0f &&  isSprinting;
-		const bool ranOutOfEnergy = sprintEnergy == 0.0f && isSprinting;
-		const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed || sprintEnergy == 0.0f) && !isSprinting;
+	const bool startedSprinting = sprintKeyHoldTime == 0.0f && isSprinting;
+	const bool ranOutOfEnergy = sprintEnergy == 0.0f && isSprinting;
+	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed || sprintEnergy == 0.0f) && !isSprinting;
 
-		if (!isExhausted) {
-			if (isSprinting && sprintEnergy > 0.0f && !GetVelocity().IsZero()) {
-				sprintKeyHoldTime += deltaTime;
+	if (!isExhausted) {
+		if (isSprinting && sprintEnergy > 0.0f && !GetVelocity().IsZero()) {
+			sprintKeyHoldTime += deltaTime;
 
-				sprintEnergy = maxSprintEnergy - (sprintKeyHoldTime * sprintEnergyConsume);
-				if (sprintEnergy < 0.0f) { sprintEnergy = 0.0f; isExhausted = true; }
+			sprintEnergy = maxSprintEnergy - (sprintKeyHoldTime * sprintEnergyConsume);
+			if (sprintEnergy < 0.0f) { sprintEnergy = 0.0f; isExhausted = true; }
 
-				UE_LOG(LogClass, Log, TEXT("SprintEnergy: %f"), sprintEnergy);
+			if (startedSprinting) { *maxWalkSpeed = maxSprintSpeed; sprintStart = GetActorLocation(); }
+		} else if (stoppedSprinting) {
+			Decelerate(deltaTime, maxWalkSpeed);
 
-				if (startedSprinting) *maxWalkSpeed = maxSprintSpeed;
-			}
-			else if (stoppedSprinting || ranOutOfEnergy) {
-				Decelerate(deltaTime, maxWalkSpeed);
-
-				if (*maxWalkSpeed == baseWalkSpeed && stoppedSprinting) sprintEnergy = maxSprintEnergy;
-			}
+			if (*maxWalkSpeed == baseWalkSpeed) sprintEnergy = maxSprintEnergy;
 		}
-		else {
-			exhaustedTime += deltaTime;
+	} else {
+		exhaustedTime += deltaTime;
 
-			if (*maxWalkSpeed > baseWalkSpeed) Decelerate(deltaTime, maxWalkSpeed);
+		if (*maxWalkSpeed > baseWalkSpeed) Decelerate(deltaTime, maxWalkSpeed);
 
-			UE_LOG(LogClass, Log, TEXT("ExhaustedTime: %f"), exhaustedTime);
-
-			if (exhaustedTime >= exhaustedDuration) { exhaustedTime = 0.0f; isExhausted = false; }
-		}
+		if (exhaustedTime >= exhaustedDuration) { exhaustedTime = 0.0f; isExhausted = false; }
 	}
 }
 
 void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed) {
-	*maxWalkSpeed = (*maxWalkSpeed < baseWalkSpeed) ? baseWalkSpeed : *maxWalkSpeed - (deltaTime * decelerationFactor);
+	*maxWalkSpeed = *maxWalkSpeed - (deltaTime * decelerationFactor);
+
+	if (*maxWalkSpeed < baseWalkSpeed) {
+		*maxWalkSpeed = baseWalkSpeed;
+
+		// Calculate sprint distance and print it to console and screen
+		sprintEnd = GetActorLocation();
+		float distance = FVector::Dist(sprintStart, sprintEnd);
+		UE_LOG(LogClass, Log, TEXT("Sprint Distance: %f"), distance);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("Sprint Distance: %f"), distance));
+	}
 }
 
 void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {

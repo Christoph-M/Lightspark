@@ -189,4 +189,6 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
 	float sprintEnergyConsume;
+
+	FVector sprintStart, sprintEnd;
 };
