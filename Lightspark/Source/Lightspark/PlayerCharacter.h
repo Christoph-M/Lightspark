@@ -106,18 +106,18 @@ protected:
 	float sprintSpeedFactor;
 
 	/**
+	* Sprint Energy Consume (float)
+	* Energy consumption per second
+	*/
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
+	float sprintEnergyConsume;
+
+	/**
 	* Deceleration Factor (float)
 	* How fast the character decelerates down to the base walk speed
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float decelerationFactor;
-
-	/**
-	* Sprint Duration (float)
-	* For how long the character can sprint
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
-	float sprintDuration;
 
 	/**
 	* Exhausted Duration (float)
@@ -169,26 +169,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
 	float exhaustedTime;
 
-	/**
-	* Max Sprint Energy (float)
-	* Maximum sprint energy
-	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
-	float maxSprintEnergy;
-
-	/**
-	* Sprint Energy (float)
-	* How much sprint energy the character currently has
-	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
-	float sprintEnergy;
-
-	/**
-	* Sprint Energy Consume (float)
-	* Sprint energy consumption calculated from Sprint Duration
-	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
-	float sprintEnergyConsume;
+	float* maxWalkSpeed;
 
 	FVector sprintStart, sprintEnd;
 };

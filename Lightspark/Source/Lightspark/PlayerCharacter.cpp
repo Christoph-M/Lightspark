@@ -14,12 +14,14 @@ APlayerCharacter::APlayerCharacter() {
 
 	energyNeededForRune = 50.0f;
 
+	GetCharacterMovement()->bNotifyApex = true;
+
+	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
 	baseWalkSpeed = 600.0f;
 	sprintSpeedFactor = 50.0f;
+	sprintEnergyConsume = 2.0f;
 	decelerationFactor = 1500.0f;
-	sprintDuration = 4.0f;
 	exhaustedDuration = 3.0f;
-	maxSprintEnergy = 100.0f;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -30,7 +32,7 @@ APlayerCharacter::APlayerCharacter() {
 	isExhausted = false;
 	JumpKeyHoldTime = 0.0f;
 	exhaustedTime = 0.0f;
-
+	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
@@ -58,8 +60,6 @@ void APlayerCharacter::BeginPlay() {
 
 	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
-	sprintEnergyConsume = maxSprintEnergy / sprintDuration;
-	sprintEnergy = maxSprintEnergy;
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
 }
@@ -171,32 +171,31 @@ void APlayerCharacter::StopSprinting() {
 }
 
 void APlayerCharacter::CheckSprintInput(float deltaTime) {
-	float* maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
-
 	const bool startedSprinting = sprintKeyHoldTime == 0.0f && isSprinting;
-	const bool ranOutOfEnergy = sprintEnergy == 0.0f && isSprinting;
-	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed || sprintEnergy == 0.0f) && !isSprinting;
+	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed /*|| characterEnergy == 0.0f*/) && !isSprinting;
 
-	if (!isExhausted) {
-		if (isSprinting && sprintEnergy > 0.0f && !GetVelocity().IsZero()) {
+	//if (!isExhausted) {
+		if (isSprinting && characterEnergy > 0.0f && !GetVelocity().IsZero()) {
 			sprintKeyHoldTime += deltaTime;
 
-			sprintEnergy = maxSprintEnergy - (sprintKeyHoldTime * sprintEnergyConsume);
-			if (sprintEnergy < 0.0f) { sprintEnergy = 0.0f; isExhausted = true; }
+			characterEnergy -= sprintEnergyConsume * deltaTime;
+			UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
+			
+			if (characterEnergy < 50.0f) { characterEnergy = 50.0f; /*isExhausted = true;*/ }
 
 			if (startedSprinting) { *maxWalkSpeed = maxSprintSpeed; sprintStart = GetActorLocation(); }
 		} else if (stoppedSprinting) {
-			Decelerate(deltaTime, maxWalkSpeed);
+			this->Decelerate(deltaTime, maxWalkSpeed);
 
-			if (*maxWalkSpeed == baseWalkSpeed) sprintEnergy = maxSprintEnergy;
+			//if (*maxWalkSpeed == baseWalkSpeed) characterEnergy = initialEnergy;
 		}
-	} else {
+	/*} else {
 		exhaustedTime += deltaTime;
 
 		if (*maxWalkSpeed > baseWalkSpeed) Decelerate(deltaTime, maxWalkSpeed);
 
 		if (exhaustedTime >= exhaustedDuration) { exhaustedTime = 0.0f; isExhausted = false; }
-	}
+	}*/
 }
 
 void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed) {
