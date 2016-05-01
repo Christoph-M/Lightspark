@@ -31,6 +31,12 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
+	virtual void Jump() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
+	virtual void StopJumping() override;
+
 protected:
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
@@ -73,6 +79,13 @@ protected:
 	UFUNCTION()
 	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;
 
+private:
+	UFUNCTION()
+	void JumpApex();
+
+	UFUNCTION()
+	void JumpLanded(const FHitResult& Hit);
+
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -89,6 +102,14 @@ protected:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float energyNeededForRune;
+
+
+	/**
+	* Jump Energy Consume (float)
+	* Energy consumption per jump
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	float jumpEnergyConsume;
 
 
 	/**
@@ -134,6 +155,15 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Energy")
 	int32 characterRunes;
 
+
+	/**
+	* Is Jumping (bool)
+	* Is the character currently jumping
+	*/
+	UPROPERTY(VisibleAnywhere, Category = "Movement|Jump")
+	bool isJumping;
+
+
 	/**
 	* Max Sprint Speed (float)
 	* The maximum sprint speed the character can achieve
@@ -171,5 +201,5 @@ private:
 
 	float* maxWalkSpeed;
 
-	FVector sprintStart, sprintEnd;
+	FVector measureStart, measureEnd;
 };

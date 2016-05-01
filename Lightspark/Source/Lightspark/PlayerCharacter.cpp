@@ -16,6 +16,8 @@ APlayerCharacter::APlayerCharacter() {
 
 	GetCharacterMovement()->bNotifyApex = true;
 
+	jumpEnergyConsume = 5.0f;
+
 	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
 	baseWalkSpeed = 600.0f;
 	sprintSpeedFactor = 50.0f;
@@ -62,6 +64,9 @@ void APlayerCharacter::BeginPlay() {
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+
+	OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
+	LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
 }
 
 void APlayerCharacter::Tick(float deltaTime) {
@@ -77,8 +82,8 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 {
 	// Set up gameplay key bindings
 	check(InputComponent);
-	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	InputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::Jump);
+	InputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::StopJumping);
 
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
 	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
@@ -158,6 +163,38 @@ void APlayerCharacter::MoveRight(float Value)
 	}
 }
 
+
+void APlayerCharacter::Jump() {
+	Super::Jump();
+	
+	if (!isJumping) {
+		if (characterEnergy > 50.0f) characterEnergy -= jumpEnergyConsume;
+		UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
+
+		measureStart = GetActorLocation();
+	}
+
+	isJumping = true;
+}
+
+void APlayerCharacter::StopJumping() {
+	Super::StopJumping();
+}
+
+void APlayerCharacter::JumpApex() {
+	measureEnd = GetActorLocation();
+	float distance = FVector::Dist(measureStart, measureEnd);
+	UE_LOG(LogClass, Log, TEXT("Jump Height: %f"), distance);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("Jump Height: %f"), distance));
+}
+
+void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
+	isJumping = false;
+	UE_LOG(LogClass, Log, TEXT("Landed"));
+	GetCharacterMovement()->bNotifyApex = true;
+}
+
+
 void APlayerCharacter::StartSprinting() {
 	isSprinting = true;
 	UE_LOG(LogClass, Log, TEXT("Started sprinting"));
@@ -178,12 +215,12 @@ void APlayerCharacter::CheckSprintInput(float deltaTime) {
 		if (isSprinting && characterEnergy > 0.0f && !GetVelocity().IsZero()) {
 			sprintKeyHoldTime += deltaTime;
 
-			characterEnergy -= sprintEnergyConsume * deltaTime;
+			if (characterEnergy > 50.0f) characterEnergy -= sprintEnergyConsume * deltaTime;
 			UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
 			
-			if (characterEnergy < 50.0f) { characterEnergy = 50.0f; /*isExhausted = true;*/ }
+			//if (characterEnergy < 50.0f) { characterEnergy = 50.0f; isExhausted = true; }
 
-			if (startedSprinting) { *maxWalkSpeed = maxSprintSpeed; sprintStart = GetActorLocation(); }
+			if (startedSprinting) { *maxWalkSpeed = maxSprintSpeed; measureStart = GetActorLocation(); }
 		} else if (stoppedSprinting) {
 			this->Decelerate(deltaTime, maxWalkSpeed);
 
@@ -205,8 +242,8 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed) {
 		*maxWalkSpeed = baseWalkSpeed;
 
 		// Calculate sprint distance and print it to console and screen
-		sprintEnd = GetActorLocation();
-		float distance = FVector::Dist(sprintStart, sprintEnd);
+		measureEnd = GetActorLocation();
+		float distance = FVector::Dist(measureStart, measureEnd);
 		UE_LOG(LogClass, Log, TEXT("Sprint Distance: %f"), distance);
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("Sprint Distance: %f"), distance));
 	}
