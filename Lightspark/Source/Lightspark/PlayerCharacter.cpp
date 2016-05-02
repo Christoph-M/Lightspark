@@ -2,6 +2,7 @@
 
 #include "Lightspark.h"
 #include "PlayerCharacter.h"
+#include "LightsparkGameMode.h"
 #include "LightInteractable.h"
 
 
@@ -16,6 +17,11 @@ APlayerCharacter::APlayerCharacter() {
 
 	GetCharacterMovement()->bNotifyApex = true;
 
+	for (int i = 0; i < 4; ++i) {
+		SprintEmpowermentActive.Add(false);
+		JumpEmpowermentActive.Add(false);
+	}
+
 	jumpEnergyConsume = 5.0f;
 
 	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
@@ -23,7 +29,7 @@ APlayerCharacter::APlayerCharacter() {
 	sprintSpeedFactor = 50.0f;
 	sprintEnergyConsume = 2.0f;
 	decelerationFactor = 1500.0f;
-	exhaustedDuration = 3.0f;
+	dashEnabledTime = 3.0f;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -31,9 +37,9 @@ APlayerCharacter::APlayerCharacter() {
 	bUseControllerRotationRoll = false;
 
 	isSprinting = false;
-	isExhausted = false;
 	JumpKeyHoldTime = 0.0f;
-	exhaustedTime = 0.0f;
+	dashEnabled = false;
+	isDashing = false;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -62,6 +68,7 @@ void APlayerCharacter::BeginPlay() {
 
 	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
+	SetSprintEmpowermentActive(2, true);
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
 
@@ -197,6 +204,7 @@ void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
 
 void APlayerCharacter::StartSprinting() {
 	isSprinting = true;
+	if (GetSprintEmpowermentActive(2)) dashEnabled = true;
 	UE_LOG(LogClass, Log, TEXT("Started sprinting"));
 	sprintKeyHoldTime = 0.0f;
 }
@@ -209,37 +217,42 @@ void APlayerCharacter::StopSprinting() {
 
 void APlayerCharacter::CheckSprintInput(float deltaTime) {
 	const bool startedSprinting = sprintKeyHoldTime == 0.0f && isSprinting;
-	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed /*|| characterEnergy == 0.0f*/) && !isSprinting;
+	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed) && !isSprinting;
 
-	//if (!isExhausted) {
-		if (isSprinting && characterEnergy > 0.0f && !GetVelocity().IsZero()) {
-			sprintKeyHoldTime += deltaTime;
+	if (dashEnabled) {
+		this->Dash(deltaTime);
 
-			if (characterEnergy > 50.0f) characterEnergy -= sprintEnergyConsume * deltaTime;
-			UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
-			
-			//if (characterEnergy < 50.0f) { characterEnergy = 50.0f; isExhausted = true; }
+		dashEnabledTime -= deltaTime;
+	}
 
-			if (startedSprinting) { *maxWalkSpeed = maxSprintSpeed; measureStart = GetActorLocation(); }
-		} else if (stoppedSprinting) {
-			this->Decelerate(deltaTime, maxWalkSpeed);
+	if (isSprinting && characterEnergy > 0.0f && !GetVelocity().IsZero() && !isJumping) {
+		this->Sprint(deltaTime, startedSprinting);
 
-			//if (*maxWalkSpeed == baseWalkSpeed) characterEnergy = initialEnergy;
-		}
-	/*} else {
-		exhaustedTime += deltaTime;
-
-		if (*maxWalkSpeed > baseWalkSpeed) Decelerate(deltaTime, maxWalkSpeed);
-
-		if (exhaustedTime >= exhaustedDuration) { exhaustedTime = 0.0f; isExhausted = false; }
-	}*/
+		sprintKeyHoldTime += deltaTime;
+	} else if (stoppedSprinting) {
+		this->Decelerate(deltaTime, maxWalkSpeed, baseWalkSpeed);
+	}
 }
 
-void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed) {
+void APlayerCharacter::Sprint(float deltaTime, bool startedSprinting) {
+	if (characterEnergy > energyNeededForRune) characterEnergy -= sprintEnergyConsume * deltaTime;
+	UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
+
+	if (startedSprinting) {
+		*maxWalkSpeed = maxSprintSpeed;
+		measureStart = GetActorLocation();
+	}
+}
+
+void APlayerCharacter::Dash(float deltaTime) {
+
+}
+
+void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed) {
 	*maxWalkSpeed = *maxWalkSpeed - (deltaTime * decelerationFactor);
 
-	if (*maxWalkSpeed < baseWalkSpeed) {
-		*maxWalkSpeed = baseWalkSpeed;
+	if (*maxWalkSpeed < baseSpeed) {
+		*maxWalkSpeed = baseSpeed;
 
 		// Calculate sprint distance and print it to console and screen
 		measureEnd = GetActorLocation();

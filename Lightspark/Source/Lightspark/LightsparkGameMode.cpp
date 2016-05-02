@@ -3,6 +3,8 @@
 #include "Lightspark.h"
 #include "LightsparkGameMode.h"
 #include "LightsparkCharacter.h"
+#include "PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 ALightsparkGameMode::ALightsparkGameMode()
 {
@@ -11,5 +13,22 @@ ALightsparkGameMode::ALightsparkGameMode()
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
+	}
+}
+
+void ALightsparkGameMode::BeginPlay() {
+	Super::BeginPlay();
+
+	SetCurrentPlayState(ELightsparkPlayState::Playing);
+}
+
+void ALightsparkGameMode::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+	APlayerCharacter* MyCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	if (MyCharacter) {
+		if (MyCharacter->GetCurrentCharacterEnergy() <= 0.0f) {
+			SetCurrentPlayState(ELightsparkPlayState::GameOver);
+		}
 	}
 }

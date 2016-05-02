@@ -70,7 +70,11 @@ protected:
 
 	void CheckSprintInput(float deltaTime);
 
-	void Decelerate(float deltaTime, float* maxWalkSpeed);
+	void Sprint(float deltaTime, bool startedSprinting);
+
+	void Dash(float deltaTime);
+
+	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -102,6 +106,15 @@ protected:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float energyNeededForRune;
+
+
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
+
+	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }
+	void SetJumpEmpowermentActive(int i, bool active) { JumpEmpowermentActive[i] = active; }
 
 
 	/**
@@ -141,26 +154,32 @@ protected:
 	float decelerationFactor;
 
 	/**
-	* Exhausted Duration (float)
-	* For how long the character can't sprint after sprint energy is fully depleted
+	* Dash Enabled Time (float)
+	* For how long the dash ability is active after sprint button has been released
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
-	float exhaustedDuration;
+	float dashEnabledTime;
 
 private:
 	/**
 	* Character Runes (int32)
 	* How many runes the character currently has
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Energy")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Energy", meta = (AllowPrivateAccess = "true"))
 	int32 characterRunes;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Empowerment", meta = (AllowPrivateAccess = "true"))
+	TArray<bool> SprintEmpowermentActive;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Empowerment", meta = (AllowPrivateAccess = "true"))
+	TArray<bool> JumpEmpowermentActive;
 
 
 	/**
 	* Is Jumping (bool)
 	* Is the character currently jumping
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Jump")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
 	bool isJumping;
 
 
@@ -168,36 +187,36 @@ private:
 	* Max Sprint Speed (float)
 	* The maximum sprint speed the character can achieve
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	float maxSprintSpeed;
 
 	/**
 	* Is Sprinting (bool)
 	* Is the character currently sprinting
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	bool isSprinting;
-
-	/**
-	* Is Exhausted (bool)
-	* Is the character currently exhausted
-	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
-	bool isExhausted;
 
 	/**
 	* Sprint Key Hold Time (float)
 	* How long the sprint key has been held
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	float sprintKeyHoldTime;
 
 	/**
-	* Exhausted Time (float)
-	* For how long the character has been exhausted
+	* Dash Enabled (bool)
+	* Can the character dash
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint")
-	float exhaustedTime;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
+	bool dashEnabled;
+
+	/**
+	* Is Dashing (bool)
+	* Is the character currently dashing
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
+	bool isDashing;
 
 	float* maxWalkSpeed;
 
