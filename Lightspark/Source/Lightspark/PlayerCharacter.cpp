@@ -36,6 +36,8 @@ APlayerCharacter::APlayerCharacter() {
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	jumpTime = 0.0f;
+
 	isSprinting = false;
 	JumpKeyHoldTime = 0.0f;
 	dashEnabled = false;
@@ -66,20 +68,25 @@ void APlayerCharacter::BeginPlay() {
 
 	characterRunes = characterEnergy / energyNeededForRune;
 
+	this->SetCurrentMovementState(EMovementState::Default);
+
 	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
-	SetSprintEmpowermentActive(2, true);
+	this->SetSprintEmpowermentActive(2, true);
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
 
 	OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
 	LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+
+	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
 }
 
 void APlayerCharacter::Tick(float deltaTime) {
 	Super::Tick(deltaTime);
 
-	CheckSprintInput(deltaTime);
+	this->CheckMovementInput(deltaTime);
+	this->EvaluateMovementState(deltaTime);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -173,15 +180,9 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::Jump() {
 	Super::Jump();
-	
-	if (!isJumping) {
-		if (characterEnergy > 50.0f) characterEnergy -= jumpEnergyConsume;
-		UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
-
-		measureStart = GetActorLocation();
-	}
 
 	isJumping = true;
+	jumpTime = 0.0f;
 }
 
 void APlayerCharacter::StopJumping() {
@@ -199,54 +200,87 @@ void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
 	isJumping = false;
 	UE_LOG(LogClass, Log, TEXT("Landed"));
 	GetCharacterMovement()->bNotifyApex = true;
+	jumpTime = 0.0f;
 }
 
 
 void APlayerCharacter::StartSprinting() {
+	/*if (GetSprintEmpowermentActive(2) && isSprinting) {
+		dashEnabled = true;
+		GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::Dash, dashEnabledTime);
+		GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
+	}*/
 	isSprinting = true;
-	if (GetSprintEmpowermentActive(2)) dashEnabled = true;
 	UE_LOG(LogClass, Log, TEXT("Started sprinting"));
 	sprintKeyHoldTime = 0.0f;
 }
 
 void APlayerCharacter::StopSprinting() {
 	isSprinting = false;
+	//GetWorld()->GetTimerManager().UnPauseTimer(DashTimerHandle);
 	UE_LOG(LogClass, Log, TEXT("Stopped sprinting. Hold time: %f"), sprintKeyHoldTime);
 	sprintKeyHoldTime = 0.0f;
 }
 
-void APlayerCharacter::CheckSprintInput(float deltaTime) {
-	const bool startedSprinting = sprintKeyHoldTime == 0.0f && isSprinting;
-	const bool stoppedSprinting = (*maxWalkSpeed > baseWalkSpeed) && !isSprinting;
 
-	if (dashEnabled) {
-		this->Dash(deltaTime);
-
-		dashEnabledTime -= deltaTime;
-	}
-
-	if (isSprinting && characterEnergy > 0.0f && !GetVelocity().IsZero() && !isJumping) {
-		this->Sprint(deltaTime, startedSprinting);
-
-		sprintKeyHoldTime += deltaTime;
-	} else if (stoppedSprinting) {
-		this->Decelerate(deltaTime, maxWalkSpeed, baseWalkSpeed);
+void APlayerCharacter::CheckMovementInput(float deltaTime) {
+	if (GetVelocity().IsZero()) {
+		this->SetCurrentMovementState(EMovementState::Default);
+	} else if (isJumping && jumpTime == 0.0f) {
+		this->SetCurrentMovementState(EMovementState::Jump);
+	} else if (isJumping) {
+		this->SetCurrentMovementState(EMovementState::Jumping);
+	} else if (isSprinting) {
+		this->SetCurrentMovementState(EMovementState::Sprint);
+	} else if (*maxWalkSpeed > baseWalkSpeed) {
+		this->SetCurrentMovementState(EMovementState::StopSprint);
+	} else {
+		this->SetCurrentMovementState(EMovementState::Moving);
 	}
 }
 
-void APlayerCharacter::Sprint(float deltaTime, bool startedSprinting) {
-	if (characterEnergy > energyNeededForRune) characterEnergy -= sprintEnergyConsume * deltaTime;
-	UE_LOG(LogClass, Log, TEXT("Character Energy: %f"), characterEnergy);
+void APlayerCharacter::EvaluateMovementState(float deltaTime) {
+	switch (this->GetCurrentMovementState()) {
+		case EMovementState::Default: break;
+		case EMovementState::DoubleJump: break;
+		case EMovementState::Jump:
+			this->Jump(deltaTime); break;
+		case EMovementState::JumpGlide: break;
+		case EMovementState::Jumping: break;
+		case EMovementState::Moving: break;
+		case EMovementState::Sprint:
+			this->Sprint(deltaTime); break;
+		case EMovementState::SprintDash: break;
+		case EMovementState::StopSprint:
+			this->Decelerate(deltaTime, maxWalkSpeed, baseWalkSpeed); break;
+		default: break;
+	}
+}
 
-	if (startedSprinting) {
+
+void APlayerCharacter::Jump(float deltaTime) {
+	if (characterEnergy > energyNeededForRune) characterEnergy -= jumpEnergyConsume;
+
+	jumpTime += deltaTime;
+
+	measureStart = GetActorLocation();
+}
+
+void APlayerCharacter::Sprint(float deltaTime) {
+	if (characterEnergy > energyNeededForRune) characterEnergy -= sprintEnergyConsume * deltaTime;
+
+	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
 		measureStart = GetActorLocation();
 	}
+
+	sprintKeyHoldTime += deltaTime;
 }
 
-void APlayerCharacter::Dash(float deltaTime) {
-
-}
+//void APlayerCharacter::Dash() {
+//	dashEnabled = false;
+//	UE_LOG(LogClass, Log, TEXT("Dash disabled"));
+//}
 
 void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed) {
 	*maxWalkSpeed = *maxWalkSpeed - (deltaTime * decelerationFactor);
@@ -272,4 +306,9 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 
 		TestInteractable->ChangeState(EInteractionState::Lit);
 	}
+}
+
+void APlayerCharacter::DisplayCurrentStates() {
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Jump Height: %f"), characterEnergy));
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
 }

@@ -19,7 +19,7 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 
-	SetCurrentPlayState(ELightsparkPlayState::Playing);
+	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }
 
 void ALightsparkGameMode::Tick(float DeltaTime) {
@@ -28,7 +28,7 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 	APlayerCharacter* MyCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	if (MyCharacter) {
 		if (MyCharacter->GetCurrentCharacterEnergy() <= 0.0f) {
-			SetCurrentPlayState(ELightsparkPlayState::GameOver);
+			this->SetCurrentPlayState(ELightsparkPlayState::GameOver);
 		}
 	}
 }

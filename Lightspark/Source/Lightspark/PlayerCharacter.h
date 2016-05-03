@@ -6,6 +6,20 @@
 #include "PlayerCharacter.generated.h"
 
 
+UENUM(BlueprintType)
+enum class EMovementState {
+	Default,
+	Moving,
+	Sprint,
+	SprintDash,
+	StopSprint,
+	Jump,
+	Jumping,
+	DoubleJump,
+	JumpGlide
+};
+
+
 UCLASS(config = Game)
 class LIGHTSPARK_API APlayerCharacter : public ALightsparkCharacter
 {
@@ -31,6 +45,11 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	UFUNCTION(BlueprintPure, Category = "Movement")
+	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
+
+	void SetCurrentMovementState(EMovementState NewState) { CurrentMovementState = NewState; }
+
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
 	virtual void Jump() override;
 
@@ -38,6 +57,15 @@ public:
 	virtual void StopJumping() override;
 
 protected:
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
+
+	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }
+	void SetJumpEmpowermentActive(int i, bool active) { JumpEmpowermentActive[i] = active; }
+
+
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
 
@@ -68,11 +96,15 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StopSprinting();
 
-	void CheckSprintInput(float deltaTime);
+	void CheckMovementInput(float deltaTime);
 
-	void Sprint(float deltaTime, bool startedSprinting);
+	void EvaluateMovementState(float deltaTime);
 
-	void Dash(float deltaTime);
+	void Jump(float deltaTime);
+
+	void Sprint(float deltaTime);
+
+	//void Dash();
 
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
@@ -90,6 +122,8 @@ private:
 	UFUNCTION()
 	void JumpLanded(const FHitResult& Hit);
 
+	void DisplayCurrentStates();
+
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -106,15 +140,6 @@ protected:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float energyNeededForRune;
-
-
-	UFUNCTION(BlueprintPure, Category = "Empowerment")
-	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
-	UFUNCTION(BlueprintPure, Category = "Empowerment")
-	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
-
-	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }
-	void SetJumpEmpowermentActive(int i, bool active) { JumpEmpowermentActive[i] = active; }
 
 
 	/**
@@ -169,6 +194,9 @@ private:
 	int32 characterRunes;
 
 
+	EMovementState CurrentMovementState;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Empowerment", meta = (AllowPrivateAccess = "true"))
 	TArray<bool> SprintEmpowermentActive;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Empowerment", meta = (AllowPrivateAccess = "true"))
@@ -181,6 +209,13 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
 	bool isJumping;
+
+	/**
+	* Jump Time (float)
+	* How long the character has been in the air
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
+	float jumpTime;
 
 
 	/**
@@ -219,6 +254,8 @@ private:
 	bool isDashing;
 
 	float* maxWalkSpeed;
+
+	FTimerHandle DashTimerHandle, DisplayTimerHandle;
 
 	FVector measureStart, measureEnd;
 };
