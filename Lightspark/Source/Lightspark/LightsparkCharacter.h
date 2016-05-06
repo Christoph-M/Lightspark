@@ -36,8 +36,15 @@ protected:
 	* Initial Energy (float)
 	* How much energy the character has at start
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float initialEnergy;
+
+	/**
+	* Max Energy (float)
+	* Maximum amount of energy the character can have
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float maxEnergy;
 
 	/**
 	* Character Energy (float)

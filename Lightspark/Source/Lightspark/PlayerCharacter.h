@@ -32,6 +32,9 @@ class LIGHTSPARK_API APlayerCharacter : public ALightsparkCharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UPointLightComponent* LifeLight;
 	
 public:
 	APlayerCharacter();
@@ -44,6 +47,8 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	FORCEINLINE class UPointLightComponent* GetLifeLight() const { return LifeLight; }
 
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
@@ -122,6 +127,8 @@ private:
 	UFUNCTION()
 	void JumpLanded(const FHitResult& Hit);
 
+	void UpdateLight();
+
 	void DisplayCurrentStates();
 
 public:
@@ -138,15 +145,44 @@ protected:
 	* Energy Needed For Rune (float)
 	* How much energy is needed to fill a rune
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float energyNeededForRune;
+
+
+	/**
+	* Min Light Range (float)
+	* Minimum Life Light range
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float minLightRange;
+
+	/**
+	* Max Light Range (float)
+	* Maximum Life Light range
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float maxLightRange;
+
+	/**
+	* Min Light Temp (float)
+	* Minimum Life Light temperature
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float minLightTemp;
+
+	/**
+	* Max Light Temp (float)
+	* Maximum Life Light temperature
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float maxLightTemp;
 
 
 	/**
 	* Jump Energy Consume (float)
 	* Energy consumption per jump
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float jumpEnergyConsume;
 
 
@@ -154,7 +190,7 @@ protected:
 	* Base Walk Speed (float)
 	* How fast the character walks
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float baseWalkSpeed;
 
 	/**
@@ -168,7 +204,7 @@ protected:
 	* Sprint Energy Consume (float)
 	* Energy consumption per second
 	*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement|Sprint|Energy")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float sprintEnergyConsume;
 
 	/**
@@ -187,6 +223,13 @@ protected:
 
 private:
 	/**
+	* Current Max Energy (float)
+	* The current maximum character energy
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Energy", meta = (AllowPrivateAccess = "true"))
+	float currentMaxEnergy;
+
+	/**
 	* Character Runes (int32)
 	* How many runes the character currently has
 	*/
@@ -194,11 +237,25 @@ private:
 	int32 characterRunes;
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightRangeFactor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightTempFactor;
+
+
 	EMovementState CurrentMovementState;
 
-
+	/**
+	* Sprint Empowerment Active (TArray<bool>)
+	* Which sprint empowerments are enabled
+	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Empowerment", meta = (AllowPrivateAccess = "true"))
 	TArray<bool> SprintEmpowermentActive;
+	/**
+	* Jump Empowerment Active (TArray<bool>)
+	* Which jump empowerments are enabled
+	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Empowerment", meta = (AllowPrivateAccess = "true"))
 	TArray<bool> JumpEmpowermentActive;
 

@@ -14,6 +14,7 @@ ALightsparkCharacter::ALightsparkCharacter()
 	interactionRadius = 200.0f;
 
 	initialEnergy = 50.0f;
+	maxEnergy = 300.0f;
 
 	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionRange"));
 	InteractionSphere->AttachTo(RootComponent);

@@ -12,7 +12,8 @@ APlayerCharacter::APlayerCharacter() {
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-
+	
+	currentMaxEnergy = 100.0f;
 	energyNeededForRune = 50.0f;
 
 	GetCharacterMovement()->bNotifyApex = true;
@@ -42,6 +43,11 @@ APlayerCharacter::APlayerCharacter() {
 	JumpKeyHoldTime = 0.0f;
 	dashEnabled = false;
 	isDashing = false;
+
+	minLightRange = 600.0f;
+	maxLightRange = 2000.0f;
+	minLightTemp = 1000.0f;
+	maxLightTemp = 12000.0f;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -61,10 +67,22 @@ APlayerCharacter::APlayerCharacter() {
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	GetInteractionSphere()->ComponentTags.Add(TEXT("Light"));
+
+	GetMesh()->SetCastShadow(false);
+
+	LifeLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("LifeLight"));
+	LifeLight->AttachTo(RootComponent);
+	LifeLight->bUseInverseSquaredFalloff = false;
+	LifeLight->Intensity = 50.0f;
+	LifeLight->bUseTemperature = true;
+
 }
 
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
+
+	if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
+	if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
 
 	characterRunes = characterEnergy / energyNeededForRune;
 
@@ -76,6 +94,10 @@ void APlayerCharacter::BeginPlay() {
 
 	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
 
+	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
+
+	this->UpdateLight();
+	
 	OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
 	LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
 
@@ -87,6 +109,16 @@ void APlayerCharacter::Tick(float deltaTime) {
 
 	this->CheckMovementInput(deltaTime);
 	this->EvaluateMovementState(deltaTime);
+
+	this->UpdateLight();
+}
+
+void APlayerCharacter::UpdateLight() {
+	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+
+	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
+	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->UpdateColorAndBrightness();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -267,7 +299,7 @@ void APlayerCharacter::Jump(float deltaTime) {
 }
 
 void APlayerCharacter::Sprint(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) characterEnergy -= sprintEnergyConsume * deltaTime;
+	/*if (characterEnergy > energyNeededForRune)*/ characterEnergy -= sprintEnergyConsume * deltaTime;
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
@@ -309,6 +341,6 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
-	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Jump Height: %f"), characterEnergy));
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
 }
