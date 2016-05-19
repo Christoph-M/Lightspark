@@ -2,6 +2,7 @@
 
 #include "Lightspark.h"
 #include "LightInteractable.h"
+#include "TriggeredActor.h"
 
 
 // Sets default values
@@ -75,4 +76,12 @@ void ALightInteractable::StateChangeDestroyed_Implementation() {
 
 void ALightInteractable::StateChangeUnknown_Implementation() {
 	UE_LOG(LogClass, Warning, TEXT("Unknown State."));
+}
+
+void ALightInteractable::ActivateTriggerActor() {
+	ATriggeredActor* const _TriggeredActor = Cast<ATriggeredActor>(TriggeredActor);
+
+	if (_TriggeredActor && !_TriggeredActor->IsPendingKill()) {
+		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
+	}
 }

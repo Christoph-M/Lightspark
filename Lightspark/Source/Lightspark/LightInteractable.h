@@ -33,6 +33,9 @@ public:
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return InteractableMesh; }
 	FORCEINLINE class UPointLightComponent* GetLight() const { return PointLight; }
 
+	UFUNCTION(BlueprintCallable, Category = "LightInteractable")
+	void SetTriggeredActor(class AActor* newActor) { TriggeredActor = newActor; }
+	class AActor* GetTriggeredActor() const { return TriggeredActor; }
 
 	UFUNCTION(BlueprintPure, Category = "LightInteractable")
 	EInteractionState GetCurrentState() { return CurrentState; }
@@ -60,6 +63,9 @@ public:
 	virtual void StateChangeUnknown_Implementation();
 
 protected:
+	virtual void ActivateTriggerActor();
+
+protected:
 	EInteractionState CurrentState;
 
 private:
@@ -68,4 +74,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
 	class UPointLightComponent* PointLight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
+	class AActor* TriggeredActor;
 };
