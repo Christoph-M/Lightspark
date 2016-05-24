@@ -96,6 +96,10 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
+	void Interact();
+	void SpendEnergy();
+	void ConsumeEnergy();
+
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StartSprinting();
 
@@ -113,6 +117,8 @@ protected:
 	//void Dash();
 
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
+
+	void ChangeJumpHeight();
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -185,6 +191,9 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float jumpEnergyConsume;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	float addedJumpHeight;
 
 
 	/**
@@ -316,4 +325,10 @@ private:
 	FTimerHandle DashTimerHandle, DisplayTimerHandle;
 
 	FVector measureStart, measureEnd;
+
+	bool isInteracting, canSpend, canConsume;
+
+	float baseJumpHeight;
+
+	class AActor* interactedActor;
 };
