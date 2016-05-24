@@ -92,16 +92,37 @@ void APlayerCharacter::BeginPlay() {
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 	this->SetSprintEmpowermentActive(2, true);
 
-	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+	if (!GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
+		GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+	}
 
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
 	this->UpdateLight();
 	
-	OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
-	LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+	if (!OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
+		OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
+	}
+	if (!LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
+		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+	}
 
 	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
+}
+
+void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	if (GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
+		GetInteractionSphere()->OnComponentBeginOverlap.RemoveDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+	}
+
+	if (OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
+		OnReachedJumpApex.RemoveDynamic(this, &APlayerCharacter::JumpApex);
+	}
+	if (LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
+		LandedDelegate.RemoveDynamic(this, &APlayerCharacter::JumpLanded);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void APlayerCharacter::Tick(float deltaTime) {

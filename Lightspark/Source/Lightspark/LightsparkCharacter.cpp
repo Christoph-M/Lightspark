@@ -30,7 +30,17 @@ void ALightsparkCharacter::BeginPlay() {
 
 	characterEnergy = initialEnergy;
 
-	InteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &ALightsparkCharacter::EvaluateLightInteraction);
+	if (!InteractionSphere->OnComponentBeginOverlap.IsAlreadyBound(this, &ALightsparkCharacter::EvaluateLightInteraction)) {
+		InteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &ALightsparkCharacter::EvaluateLightInteraction);
+	}
+}
+
+void ALightsparkCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	if (InteractionSphere->OnComponentBeginOverlap.IsAlreadyBound(this, &ALightsparkCharacter::EvaluateLightInteraction)) {
+		InteractionSphere->OnComponentBeginOverlap.RemoveDynamic(this, &ALightsparkCharacter::EvaluateLightInteraction);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called to bind functionality to input

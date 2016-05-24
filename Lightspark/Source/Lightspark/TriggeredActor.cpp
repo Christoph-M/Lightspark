@@ -12,7 +12,6 @@ ATriggeredActor::ATriggeredActor()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InteractionMesh"));
 	RootComponent = Mesh;
-
 }
 
 // Called when the game starts or when spawned

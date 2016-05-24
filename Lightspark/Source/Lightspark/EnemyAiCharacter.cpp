@@ -14,7 +14,17 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 void AEnemyAiCharacter::BeginPlay() {
 	Super::BeginPlay();
 
-	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::EvaluateLightInteraction);
+	if (!GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::EvaluateLightInteraction)) {
+		GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::EvaluateLightInteraction);
+	}
+}
+
+void AEnemyAiCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	if (GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::EvaluateLightInteraction)) {
+		GetInteractionSphere()->OnComponentBeginOverlap.RemoveDynamic(this, &AEnemyAiCharacter::EvaluateLightInteraction);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {

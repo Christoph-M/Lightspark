@@ -33,9 +33,11 @@ public:
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return InteractableMesh; }
 	FORCEINLINE class UPointLightComponent* GetLight() const { return PointLight; }
 
-	UFUNCTION(BlueprintCallable, Category = "LightInteractable")
-	void SetTriggeredActor(class AActor* newActor) { TriggeredActor = newActor; }
 	class AActor* GetTriggeredActor() const { return TriggeredActor; }
+	class APawn* GetTriggeredCharacter() const { return TriggeredCharacter; }
+
+	EInteractionState GetTriggerActorOnStateChange() { return TriggerActorOnStateChange; }
+	EInteractionState GetTriggerCharacterOnStateChange() { return TriggerCharacterOnStateChange; }
 
 	UFUNCTION(BlueprintPure, Category = "LightInteractable")
 	EInteractionState GetCurrentState() { return CurrentState; }
@@ -64,6 +66,7 @@ public:
 
 protected:
 	virtual void ActivateTriggerActor();
+	virtual void ActivateTriggerCharacter();
 
 protected:
 	EInteractionState CurrentState;
@@ -75,6 +78,31 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
 	class UPointLightComponent* PointLight;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
+	/**
+	* Triggered Actor (class AActor*)
+	* Actor to be triggered by state change. Must be of type ATriggeredActor.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
 	class AActor* TriggeredActor;
+
+	/**
+	* Triggered Character (class APawn*)
+	* If an enemy character should be lured, set the respective character here. Must be of type ALightsparkCharacter.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
+	class APawn* TriggeredCharacter;
+
+	/**
+	* Trigger Actor On State Change (TEnumAsByte<EInteractionState>)
+	* On which state change the Triggered Actor should be triggered. Leave Unknown if nothing should be triggered.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
+	TEnumAsByte<EInteractionState> TriggerActorOnStateChange;
+
+	/**
+	* Trigger Character On State Change (TEnumAsByte<EInteractionState>)
+	* On which state change the Triggered Character should be triggered. Leave Unknown if nothing should be triggered.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
+	TEnumAsByte<EInteractionState> TriggerCharacterOnStateChange;
 };

@@ -24,4 +24,5 @@ public:
 
 protected:
 	virtual void ActivateTriggerActor() override;
+	virtual void ActivateTriggerCharacter() override;
 };
