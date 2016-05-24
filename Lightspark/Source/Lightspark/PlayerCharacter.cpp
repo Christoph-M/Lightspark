@@ -4,6 +4,7 @@
 #include "PlayerCharacter.h"
 #include "LightsparkGameMode.h"
 #include "LightInteractable.h"
+#include "PlayerLightInteractableFlower.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -24,6 +25,7 @@ APlayerCharacter::APlayerCharacter() {
 	}
 
 	jumpEnergyConsume = 5.0f;
+	addedJumpHeight = 100.0f;
 
 	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
 	baseWalkSpeed = 600.0f;
@@ -48,6 +50,10 @@ APlayerCharacter::APlayerCharacter() {
 	maxLightRange = 2000.0f;
 	minLightTemp = 1000.0f;
 	maxLightTemp = 12000.0f;
+
+	isInteracting = false;
+	canSpend = false;
+	canConsume = false;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -92,16 +98,39 @@ void APlayerCharacter::BeginPlay() {
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 	this->SetSprintEmpowermentActive(2, true);
 
-	GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+	baseJumpHeight = GetCharacterMovement()->JumpZVelocity;
+
+	if (!GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
+		GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+	}
 
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
 	this->UpdateLight();
 	
-	OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
-	LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+	if (!OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
+		OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
+	}
+	if (!LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
+		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+	}
 
 	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
+}
+
+void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	if (GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
+		GetInteractionSphere()->OnComponentBeginOverlap.RemoveDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
+	}
+
+	if (OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
+		OnReachedJumpApex.RemoveDynamic(this, &APlayerCharacter::JumpApex);
+	}
+	if (LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
+		LandedDelegate.RemoveDynamic(this, &APlayerCharacter::JumpLanded);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void APlayerCharacter::Tick(float deltaTime) {
@@ -134,6 +163,10 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
 	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
 
+	InputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
+	InputComponent->BindAction("Spend", IE_Pressed, this, &APlayerCharacter::SpendEnergy);
+	InputComponent->BindAction("Consume", IE_Pressed, this, &APlayerCharacter::ConsumeEnergy);
+
 	InputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
 
@@ -148,6 +181,8 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	// handle touch devices
 	InputComponent->BindTouch(IE_Pressed, this, &APlayerCharacter::TouchStarted);
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
+
+	InputComponent->BindAction("JumpPower", IE_Pressed, this, &APlayerCharacter::ChangeJumpHeight);
 }
 
 
@@ -209,6 +244,62 @@ void APlayerCharacter::MoveRight(float Value)
 	}
 }
 
+
+void APlayerCharacter::Interact() {
+	if (!isInteracting) {
+		TArray<AActor*> CollectedActors;
+		GetInteractionSphere()->GetOverlappingActors(CollectedActors);
+
+		for (int i = 0; i < CollectedActors.Num(); ++i) {
+			APlayerLightInteractableFlower* const TestFlower = Cast<APlayerLightInteractableFlower>(CollectedActors[i]);
+
+			if (TestFlower && !TestFlower->IsPendingKill() && TestFlower->GetCurrentState() == EInteractionState::Default) {
+				interactedActor = TestFlower;
+
+				switch (TestFlower->GetInteractionType()) {
+					case EInteractionType::SpendConsume:	canSpend = true;  canConsume = true;  break;
+					case EInteractionType::SpendOnly:		canSpend = true;  canConsume = false; break;
+					case EInteractionType::ConsumeOnly:		canSpend = false; canConsume = true;  break;
+					case EInteractionType::NoInteraction:	canSpend = false; canConsume = false; break;
+				}
+
+				isInteracting = true;
+				GetCharacterMovement()->DisableMovement();
+			}
+		}
+	} else {
+		isInteracting = false;
+		GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+	}
+}
+
+void APlayerCharacter::SpendEnergy() {
+	if (isInteracting && canSpend && interactedActor && !interactedActor->IsPendingKill()) {
+		APlayerLightInteractableFlower* const Flower = Cast<APlayerLightInteractableFlower>(interactedActor);
+		interactedActor = nullptr;
+
+		Flower->ChangeState(EInteractionState::Lit);
+
+		characterEnergy -= energyNeededForRune;
+
+		isInteracting = false;
+		GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+	}
+}
+
+void APlayerCharacter::ConsumeEnergy() {
+	if (isInteracting && canConsume && interactedActor && !interactedActor->IsPendingKill()) {
+		APlayerLightInteractableFlower* const Flower = Cast<APlayerLightInteractableFlower>(interactedActor);
+		interactedActor = nullptr;
+
+		Flower->ChangeState(EInteractionState::Destroyed);
+
+		characterEnergy += energyNeededForRune;
+
+		isInteracting = false;
+		GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+	}
+}
 
 void APlayerCharacter::Jump() {
 	Super::Jump();
@@ -305,7 +396,7 @@ void APlayerCharacter::Sprint(float deltaTime) {
 		*maxWalkSpeed = maxSprintSpeed;
 		measureStart = GetActorLocation();
 	}
-
+	
 	sprintKeyHoldTime += deltaTime;
 }
 
@@ -328,6 +419,16 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 	}
 }
 
+void APlayerCharacter::ChangeJumpHeight() {
+	if (GetCharacterMovement()->JumpZVelocity < baseJumpHeight + addedJumpHeight) {
+		GetCharacterMovement()->JumpZVelocity += addedJumpHeight;
+	} else {
+		GetCharacterMovement()->JumpZVelocity = baseJumpHeight;
+	}
+
+	UE_LOG(LogClass, Log, TEXT("Jump Vel: %f"), GetCharacterMovement()->JumpZVelocity);
+}
+
 void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
 	Super::EvaluateLightInteraction(OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
@@ -336,11 +437,13 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
-		TestInteractable->ChangeState(EInteractionState::Lit);
+		//TestInteractable->ChangeState(EInteractionState::Lit);
 	}
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
+	if (isInteracting && canSpend) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Cyan, FString::Printf(TEXT("Press Shift to spend.")));
+	if (isInteracting && canConsume) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Cyan, FString::Printf(TEXT("Press Space to consume.")));
 }

@@ -2,6 +2,8 @@
 
 #include "Lightspark.h"
 #include "LightInteractable.h"
+#include "TriggeredActor.h"
+#include "LightsparkCharacter.h"
 
 
 // Sets default values
@@ -11,6 +13,9 @@ ALightInteractable::ALightInteractable()
 	PrimaryActorTick.bCanEverTick = false;
 
 	CurrentState = EInteractionState::Default;
+
+	TriggerActorOnStateChange = EInteractionState::Unknown;
+	TriggerCharacterOnStateChange = EInteractionState::Unknown;
 
 	InteractableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InteractionMesh"));
 	RootComponent = InteractableMesh;
@@ -75,4 +80,24 @@ void ALightInteractable::StateChangeDestroyed_Implementation() {
 
 void ALightInteractable::StateChangeUnknown_Implementation() {
 	UE_LOG(LogClass, Warning, TEXT("Unknown State."));
+}
+
+void ALightInteractable::ActivateTriggerActor() {
+	ATriggeredActor* const _TriggeredActor = Cast<ATriggeredActor>(TriggeredActor);
+
+	if (_TriggeredActor && !_TriggeredActor->IsPendingKill()) {
+		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
+	} else {
+		UE_LOG(LogClass, Warning, TEXT("Triggered Actor is not set or pending kill."));
+	}
+}
+
+void ALightInteractable::ActivateTriggerCharacter() {
+	ALightsparkCharacter* const _TriggeredCharacter = Cast<ALightsparkCharacter>(TriggeredCharacter);
+
+	if (_TriggeredCharacter && !_TriggeredCharacter->IsPendingKill()) {
+		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
+	} else {
+		UE_LOG(LogClass, Warning, TEXT("Triggered Character is not set or pending kill."));
+	}
 }
