@@ -25,6 +25,7 @@ APlayerCharacter::APlayerCharacter() {
 	}
 
 	jumpEnergyConsume = 5.0f;
+	jumpFallGravity = 2.0f;
 	addedJumpHeight = 100.0f;
 
 	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
@@ -313,6 +314,8 @@ void APlayerCharacter::StopJumping() {
 }
 
 void APlayerCharacter::JumpApex() {
+	GetCharacterMovement()->GravityScale = jumpFallGravity;
+
 	measureEnd = GetActorLocation();
 	float distance = FVector::Dist(measureStart, measureEnd);
 	UE_LOG(LogClass, Log, TEXT("Jump Height: %f"), distance);
@@ -320,6 +323,8 @@ void APlayerCharacter::JumpApex() {
 }
 
 void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
+	GetCharacterMovement()->GravityScale = 1.0f;
+
 	isJumping = false;
 	UE_LOG(LogClass, Log, TEXT("Landed"));
 	GetCharacterMovement()->bNotifyApex = true;
