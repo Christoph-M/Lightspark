@@ -192,7 +192,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float jumpEnergyConsume;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	/**
+	* Jump Fall Gravity (float)
+	* Gravity change when character reaches jump apex
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	float jumpFallGravity;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float addedJumpHeight;
 
 
