@@ -2,8 +2,8 @@
 
 #include "Lightspark.h"
 #include "PlayerLightInteractableFlower.h"
-#include "TriggeredActor.h"
-#include "LightsparkCharacter.h"
+#include "TriggeredActor/TriggeredActor.h"
+#include "LightsparkCharacter/LightsparkCharacter.h"
 
 
 

@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Lightspark.h"
-#include "LightInteractable.h"
-#include "TriggeredActor.h"
-#include "LightsparkCharacter.h"
+#include "LightInteractable/LightInteractable.h"
+#include "TriggeredActor/TriggeredActor.h"
+#include "LightsparkCharacter/LightsparkCharacter.h"
 
 
 // Sets default values

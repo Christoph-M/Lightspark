@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "LightInteractable.h"
+#include "LightInteractable/LightInteractable.h"
 #include "PlayerLightInteractable.generated.h"
 
 

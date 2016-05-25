@@ -2,8 +2,8 @@
 
 #include "Lightspark.h"
 #include "LightsparkGameMode.h"
-#include "LightsparkCharacter.h"
-#include "PlayerCharacter.h"
+#include "LightsparkCharacter/LightsparkCharacter.h"
+#include "LightsparkCharacter/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 ALightsparkGameMode::ALightsparkGameMode()

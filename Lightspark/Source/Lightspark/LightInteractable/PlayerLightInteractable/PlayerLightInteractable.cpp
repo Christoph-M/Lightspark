@@ -2,7 +2,7 @@
 
 #include "Lightspark.h"
 #include "PlayerLightInteractable.h"
-#include "TriggeredActor.h"
+#include "TriggeredActor/TriggeredActor.h"
 
 
 

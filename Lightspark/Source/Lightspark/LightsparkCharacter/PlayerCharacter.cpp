@@ -3,8 +3,8 @@
 #include "Lightspark.h"
 #include "PlayerCharacter.h"
 #include "LightsparkGameMode.h"
-#include "LightInteractable.h"
-#include "PlayerLightInteractableFlower.h"
+#include "LightInteractable/LightInteractable.h"
+#include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 
 
 APlayerCharacter::APlayerCharacter() {
