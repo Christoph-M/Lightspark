@@ -2,7 +2,7 @@
 
 #include "Lightspark.h"
 #include "EnemyAiCharacter.h"
-#include "LightInteractable.h"
+#include "LightInteractable/LightInteractable.h"
 
 
 AEnemyAiCharacter::AEnemyAiCharacter() {

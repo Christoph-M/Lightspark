@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "LightsparkCharacter.h"
+#include "LightsparkCharacter/LightsparkCharacter.h"
 #include "AiCharacter.generated.h"
 
 UCLASS()
