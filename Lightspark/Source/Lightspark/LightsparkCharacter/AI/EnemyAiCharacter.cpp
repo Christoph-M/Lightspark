@@ -3,6 +3,7 @@
 #include "Lightspark.h"
 #include "EnemyAiCharacter.h"
 #include "LightInteractable/LightInteractable.h"
+#include "LightsparkCharacter/PlayerCharacter.h"
 
 
 AEnemyAiCharacter::AEnemyAiCharacter() {
@@ -35,6 +36,19 @@ void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
-		TestInteractable->ChangeState(EInteractionState::Unlit);
+		TArray<AActor*> CollectedActors;
+		TestInteractable->GetMesh()->GetOverlappingActors(CollectedActors);
+
+		bool strongerPlayerInRange = false;
+
+		for (int i = 0; i < CollectedActors.Num(); ++i) {
+			const APlayerCharacter* TestEnemy = Cast<APlayerCharacter>(CollectedActors[i]);
+
+			if (TestEnemy && !TestEnemy->IsPendingKill()) {
+				// If player is stronger, strongerPlayerInrange = true; break;
+			}
+		}
+
+		if (!strongerPlayerInRange) TestInteractable->ChangeState(EInteractionState::Unlit);
 	}
 }

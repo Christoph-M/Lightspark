@@ -45,16 +45,12 @@ void ALightInteractable::ChangeState(EInteractionState newState) {
 		if (CurrentState != EInteractionState::Destroyed) {
 			CurrentState = newState;
 
-			if (CurrentState == EInteractionState::Default) {
-				StateChangeDefault();
-			} else if (CurrentState == EInteractionState::Lit) {
-				StateChangeLit();
-			} else if (CurrentState == EInteractionState::Unlit) {
-				StateChangeUnlit();
-			} else if (CurrentState == EInteractionState::Destroyed) {
-				StateChangeDestroyed();
-			} else {
-				StateChangeUnknown();
+			switch (CurrentState) {
+				case EInteractionState::Default:	StateChangeDefault();	break;
+				case EInteractionState::Lit:		StateChangeLit();		break;
+				case EInteractionState::Unlit:		StateChangeUnlit();		break;
+				case EInteractionState::Destroyed:	StateChangeDestroyed(); break;
+				default:							StateChangeUnknown();
 			}
 		} else {
 			

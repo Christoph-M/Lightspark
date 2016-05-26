@@ -4,7 +4,9 @@
 #include "PlayerCharacter.h"
 #include "LightsparkGameMode.h"
 #include "LightInteractable/LightInteractable.h"
+#include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
+#include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -16,6 +18,8 @@ APlayerCharacter::APlayerCharacter() {
 	
 	currentMaxEnergy = 100.0f;
 	energyNeededForRune = 50.0f;
+	spendEnergyConsume = 25.0f;
+	consumeEnergyGain = 50.0f;
 
 	GetCharacterMovement()->bNotifyApex = true;
 
@@ -25,7 +29,9 @@ APlayerCharacter::APlayerCharacter() {
 	}
 
 	jumpEnergyConsume = 5.0f;
+	doubleJumpEnergyConsume = 5.0f;
 	jumpFallGravity = 2.0f;
+	glideSpeed = 250.0f;
 	addedJumpHeight = 100.0f;
 
 	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
@@ -42,6 +48,11 @@ APlayerCharacter::APlayerCharacter() {
 
 	jumpTime = 0.0f;
 
+	isJumping = false;
+	isFalling = false;
+	canDoubleJump = false;
+	doubleJumped = false;
+	isGliding = false;
 	isSprinting = false;
 	JumpKeyHoldTime = 0.0f;
 	dashEnabled = false;
@@ -88,6 +99,8 @@ APlayerCharacter::APlayerCharacter() {
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	CharacterMovement = GetCharacterMovement();
+
 	if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 	if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
 
@@ -95,11 +108,13 @@ void APlayerCharacter::BeginPlay() {
 
 	this->SetCurrentMovementState(EMovementState::Default);
 
-	GetCharacterMovement()->MaxWalkSpeed = baseWalkSpeed;
+	CharacterMovement->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
-	this->SetSprintEmpowermentActive(2, true);
+	this->SetSprintEmpowermentActive(SEmp_Dash, true);
+	this->SetJumpEmpowermentActive(JEmp_DoubleJump, true);
+	this->SetJumpEmpowermentActive(JEmp_Glide, true);
 
-	baseJumpHeight = GetCharacterMovement()->JumpZVelocity;
+	baseJumpHeight = CharacterMovement->JumpZVelocity;
 
 	if (!GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
 		GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
@@ -116,7 +131,9 @@ void APlayerCharacter::BeginPlay() {
 		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
+	if (!GetWorld()->GetTimerManager().TimerExists(DisplayTimerHandle)) {
+		GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
+	}
 }
 
 void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
@@ -131,6 +148,8 @@ void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 		LandedDelegate.RemoveDynamic(this, &APlayerCharacter::JumpLanded);
 	}
 
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -139,16 +158,6 @@ void APlayerCharacter::Tick(float deltaTime) {
 
 	this->CheckMovementInput(deltaTime);
 	this->EvaluateMovementState(deltaTime);
-
-	this->UpdateLight();
-}
-
-void APlayerCharacter::UpdateLight() {
-	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
-
-	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
-	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
-	LifeLight->UpdateColorAndBrightness();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -265,12 +274,12 @@ void APlayerCharacter::Interact() {
 				}
 
 				isInteracting = true;
-				GetCharacterMovement()->DisableMovement();
+				CharacterMovement->DisableMovement();
 			}
 		}
 	} else {
 		isInteracting = false;
-		GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	}
 }
 
@@ -281,10 +290,11 @@ void APlayerCharacter::SpendEnergy() {
 
 		Flower->ChangeState(EInteractionState::Lit);
 
-		characterEnergy -= energyNeededForRune;
+		characterEnergy -= spendEnergyConsume;
+		this->UpdateLight();
 
 		isInteracting = false;
-		GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	}
 }
 
@@ -295,26 +305,39 @@ void APlayerCharacter::ConsumeEnergy() {
 
 		Flower->ChangeState(EInteractionState::Destroyed);
 
-		characterEnergy += energyNeededForRune;
+		characterEnergy += consumeEnergyGain;
+		this->UpdateLight();
 
 		isInteracting = false;
-		GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Walking;
+		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	}
 }
 
 void APlayerCharacter::Jump() {
-	Super::Jump();
+	if (!isInteracting) {
+		if (!isJumping) {
+			Super::Jump();
 
-	isJumping = true;
-	jumpTime = 0.0f;
+			isJumping = true;
+			jumpTime = 0.0f;
+		} else if (this->GetJumpEmpowermentActive(JEmp_DoubleJump) && !doubleJumped) {
+			canDoubleJump = true;
+		} else if (this->GetJumpEmpowermentActive(JEmp_Glide)) {
+			isGliding = true;
+		}
+	}
 }
 
 void APlayerCharacter::StopJumping() {
 	Super::StopJumping();
+
+	isGliding = false;
 }
 
 void APlayerCharacter::JumpApex() {
-	GetCharacterMovement()->GravityScale = jumpFallGravity;
+	CharacterMovement->GravityScale = jumpFallGravity;
+
+	isFalling = true;
 
 	measureEnd = GetActorLocation();
 	float distance = FVector::Dist(measureStart, measureEnd);
@@ -323,24 +346,30 @@ void APlayerCharacter::JumpApex() {
 }
 
 void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
-	GetCharacterMovement()->GravityScale = 1.0f;
+	CharacterMovement->GravityScale = 1.0f;
 
 	isJumping = false;
+	isFalling = false;
+	doubleJumped = false;
+	canDoubleJump = false;
+	isGliding = false;
 	UE_LOG(LogClass, Log, TEXT("Landed"));
-	GetCharacterMovement()->bNotifyApex = true;
+	CharacterMovement->bNotifyApex = true;
 	jumpTime = 0.0f;
 }
 
 
 void APlayerCharacter::StartSprinting() {
-	/*if (GetSprintEmpowermentActive(2) && isSprinting) {
-		dashEnabled = true;
-		GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::Dash, dashEnabledTime);
-		GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
-	}*/
-	isSprinting = true;
-	UE_LOG(LogClass, Log, TEXT("Started sprinting"));
-	sprintKeyHoldTime = 0.0f;
+	if (!isInteracting) {
+		/*if (GetSprintEmpowermentActive(SEmp_Dash) && isSprinting) {
+			dashEnabled = true;
+			GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::Dash, dashEnabledTime);
+			GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
+		}*/
+		isSprinting = true;
+		UE_LOG(LogClass, Log, TEXT("Started sprinting"));
+		sprintKeyHoldTime = 0.0f;
+	}
 }
 
 void APlayerCharacter::StopSprinting() {
@@ -356,6 +385,10 @@ void APlayerCharacter::CheckMovementInput(float deltaTime) {
 		this->SetCurrentMovementState(EMovementState::Default);
 	} else if (isJumping && jumpTime == 0.0f) {
 		this->SetCurrentMovementState(EMovementState::Jump);
+	} else if (isJumping && canDoubleJump) {
+		this->SetCurrentMovementState(EMovementState::DoubleJump);
+	} else if (isJumping && isGliding && isFalling) {
+		this->SetCurrentMovementState(EMovementState::JumpGlide);
 	} else if (isJumping) {
 		this->SetCurrentMovementState(EMovementState::Jumping);
 	} else if (isSprinting) {
@@ -370,32 +403,70 @@ void APlayerCharacter::CheckMovementInput(float deltaTime) {
 void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 	switch (this->GetCurrentMovementState()) {
 		case EMovementState::Default: break;
-		case EMovementState::DoubleJump: break;
+		case EMovementState::DoubleJump:
+			this->DoubleJump(); break;
 		case EMovementState::Jump:
 			this->Jump(deltaTime); break;
-		case EMovementState::JumpGlide: break;
-		case EMovementState::Jumping: break;
+		case EMovementState::JumpGlide:
+			this->Glide(deltaTime); break;
+		case EMovementState::Jumping:
+			this->Jumping(deltaTime); break;
 		case EMovementState::Moving: break;
 		case EMovementState::Sprint:
 			this->Sprint(deltaTime); break;
-		case EMovementState::SprintDash: break;
+		case EMovementState::SprintDash:
+			this->Dash(); break;
 		case EMovementState::StopSprint:
 			this->Decelerate(deltaTime, maxWalkSpeed, baseWalkSpeed); break;
-		default: break;
+		default: UE_LOG(LogClass, Warning, TEXT("Movement State not set."));
 	}
 }
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) characterEnergy -= jumpEnergyConsume;
+	if (characterEnergy > energyNeededForRune) {
+		characterEnergy -= jumpEnergyConsume;
+		this->UpdateLight();
+	}
 
 	jumpTime += deltaTime;
 
 	measureStart = GetActorLocation();
 }
 
+void APlayerCharacter::Jumping(float deltaTime) {
+	jumpTime += deltaTime;
+}
+
+void APlayerCharacter::DoubleJump() {
+	CharacterMovement->GravityScale = 1.0f;
+
+	// HAAAAAX!!!!
+	CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
+	CharacterMovement->DoJump(false);
+
+	if (characterEnergy > energyNeededForRune) {
+		characterEnergy -= doubleJumpEnergyConsume;
+		this->UpdateLight();
+	}
+
+	doubleJumped = true;
+	canDoubleJump = false;
+
+	CharacterMovement->bNotifyApex = true;
+}
+
+void APlayerCharacter::Glide(float deltaTime) {
+	FVector* currentVel = &CharacterMovement->Velocity;
+	
+	if (currentVel->Z < -glideSpeed) CharacterMovement->Velocity = FVector(currentVel->X, currentVel->Y, -glideSpeed);
+}
+
 void APlayerCharacter::Sprint(float deltaTime) {
-	/*if (characterEnergy > energyNeededForRune)*/ characterEnergy -= sprintEnergyConsume * deltaTime;
+	if (characterEnergy > energyNeededForRune) {
+		characterEnergy -= sprintEnergyConsume * deltaTime;
+		this->UpdateLight();
+	}
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
@@ -405,10 +476,10 @@ void APlayerCharacter::Sprint(float deltaTime) {
 	sprintKeyHoldTime += deltaTime;
 }
 
-//void APlayerCharacter::Dash() {
-//	dashEnabled = false;
-//	UE_LOG(LogClass, Log, TEXT("Dash disabled"));
-//}
+void APlayerCharacter::Dash() {
+	dashEnabled = false;
+	UE_LOG(LogClass, Log, TEXT("Dash disabled"));
+}
 
 void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed) {
 	*maxWalkSpeed = *maxWalkSpeed - (deltaTime * decelerationFactor);
@@ -425,24 +496,47 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 }
 
 void APlayerCharacter::ChangeJumpHeight() {
-	if (GetCharacterMovement()->JumpZVelocity < baseJumpHeight + addedJumpHeight) {
-		GetCharacterMovement()->JumpZVelocity += addedJumpHeight;
+	if (CharacterMovement->JumpZVelocity < baseJumpHeight + addedJumpHeight) {
+		CharacterMovement->JumpZVelocity += addedJumpHeight;
 	} else {
-		GetCharacterMovement()->JumpZVelocity = baseJumpHeight;
+		CharacterMovement->JumpZVelocity = baseJumpHeight;
 	}
 
-	UE_LOG(LogClass, Log, TEXT("Jump Vel: %f"), GetCharacterMovement()->JumpZVelocity);
+	UE_LOG(LogClass, Log, TEXT("Jump Vel: %f"), CharacterMovement->JumpZVelocity);
+}
+
+void APlayerCharacter::UpdateLight() {
+	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+
+	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
+	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->UpdateColorAndBrightness();
+
+	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
 }
 
 void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
 	Super::EvaluateLightInteraction(OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	ALightInteractable* const TestInteractable = Cast<ALightInteractable>(OtherActor);
+	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
 
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
-		//TestInteractable->ChangeState(EInteractionState::Lit);
+		TArray<AActor*> CollectedActors;
+		TestInteractable->GetMesh()->GetOverlappingActors(CollectedActors);
+
+		bool strongerEnemyInRange = false;
+
+		for (int i = 0; i < CollectedActors.Num(); ++i) {
+			const AEnemyAiCharacter* TestEnemy = Cast<AEnemyAiCharacter>(CollectedActors[i]);
+
+			if (TestEnemy && !TestEnemy->IsPendingKill()) {
+				// If enemy is stronger, strongerEnemyInrange = true; break;
+			}
+		}
+
+		if (!strongerEnemyInRange) TestInteractable->ChangeState(EInteractionState::Lit);
 	}
 }
 
