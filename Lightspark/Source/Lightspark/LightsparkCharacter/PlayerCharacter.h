@@ -19,6 +19,22 @@ enum class EMovementState {
 	JumpGlide
 };
 
+UENUM(BlueprintType)
+enum ESprintEmpowerments {
+	SEmp_FasterSprint,
+	SEmp_SprintReducedCost,
+	SEmp_Dash,
+	SEmp_Thrust
+};
+
+UENUM(BlueprintType)
+enum EJumpEmpowerments {
+	JEmp_DoubleJump,
+	JEmp_HigherJump,
+	JEmp_JumpReducedCost,
+	JEmp_Glide
+};
+
 
 UCLASS(config = Game)
 class LIGHTSPARK_API APlayerCharacter : public ALightsparkCharacter
@@ -35,6 +51,8 @@ class LIGHTSPARK_API APlayerCharacter : public ALightsparkCharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
 	class UPointLightComponent* LifeLight;
+
+	UCharacterMovementComponent* CharacterMovement;
 	
 public:
 	APlayerCharacter();
@@ -99,6 +117,7 @@ protected:
 	void Interact();
 	void SpendEnergy();
 	void ConsumeEnergy();
+	void Merge();
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StartSprinting();
@@ -112,13 +131,21 @@ protected:
 
 	void Jump(float deltaTime);
 
+	void Jumping(float deltaTime);
+
+	void DoubleJump();
+
+	void Glide(float deltaTime);
+
 	void Sprint(float deltaTime);
 
-	//void Dash();
+	void Dash();
 
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
 	void ChangeJumpHeight();
+
+	void UseEnergy(float amount);
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -154,6 +181,20 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float energyNeededForRune;
+
+	/**
+	* Spend Energy Consume (float)
+	* How much energy is taken from character when spending to a flower.
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float spendEnergyConsume;
+
+	/**
+	* Consume Energy Gain (float)
+	* How much energy is gained when consuming from a flower.
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float consumeEnergyGain;
 
 
 	/**
@@ -193,12 +234,30 @@ protected:
 	float jumpEnergyConsume;
 
 	/**
+	* Double Jump Energy Consume (float)
+	* Energy consumption on double jump
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	float doubleJumpEnergyConsume;
+
+	/**
 	* Jump Fall Gravity (float)
 	* Gravity change when character reaches jump apex
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float jumpFallGravity;
 
+	/**
+	* Glide Factor (float)
+	* How fast the character falls down when gliding
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
+	float glideSpeed;
+
+	/**
+	* Added Jump Height (float)
+	* Jump height to be added to JumpZVelocity when Empowerment is active
+	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float addedJumpHeight;
 
@@ -216,6 +275,13 @@ protected:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float sprintSpeedFactor;
+
+	/**
+	* Faster Sprint Speed Factor (float)
+	* Speed increase (in percent) for faster sprint
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	float fasterSprintSpeedFactor;
 
 	/**
 	* Sprint Energy Consume (float)
@@ -283,6 +349,34 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
 	bool isJumping;
+
+	/**
+	* Is Falling (bool)
+	* Is the character currently falling
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
+	bool isFalling;
+
+	/**
+	* Can Double Jump (bool)
+	* Can the character currently perform a double jump
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
+	bool canDoubleJump;
+
+	/**
+	* Double Jumped (bool)
+	* Has the character made a duble jump
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
+	bool doubleJumped;
+
+	/**
+	* Is Gliding (float)
+	* Is the character currently gliding
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jump", meta = (AllowPrivateAccess = "true"))
+	bool isGliding;
 
 	/**
 	* Jump Time (float)
