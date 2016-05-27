@@ -143,8 +143,6 @@ protected:
 
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
-	void ChangeJumpHeight();
-
 	void UseEnergy(float amount);
 
 	// APawn interface

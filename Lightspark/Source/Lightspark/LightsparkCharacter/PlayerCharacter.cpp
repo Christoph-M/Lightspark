@@ -115,10 +115,6 @@ void APlayerCharacter::BeginPlay() {
 
 	baseJumpHeight = CharacterMovement->JumpZVelocity;
 
-	if (!GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
-		GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
-	}
-
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
 	this->UpdateLight();
@@ -136,10 +132,6 @@ void APlayerCharacter::BeginPlay() {
 }
 
 void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	if (GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
-		GetInteractionSphere()->OnComponentBeginOverlap.RemoveDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
-	}
-
 	if (OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
 		OnReachedJumpApex.RemoveDynamic(this, &APlayerCharacter::JumpApex);
 	}
@@ -190,8 +182,6 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	// handle touch devices
 	InputComponent->BindTouch(IE_Pressed, this, &APlayerCharacter::TouchStarted);
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
-
-	InputComponent->BindAction("JumpPower", IE_Pressed, this, &APlayerCharacter::ChangeJumpHeight);
 }
 
 
@@ -559,16 +549,6 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 	}
 }
 
-void APlayerCharacter::ChangeJumpHeight() {
-	if (CharacterMovement->JumpZVelocity < baseJumpHeight + addedJumpHeight) {
-		CharacterMovement->JumpZVelocity += addedJumpHeight;
-	} else {
-		CharacterMovement->JumpZVelocity = baseJumpHeight;
-	}
-
-	UE_LOG(LogClass, Log, TEXT("Jump Vel: %f"), CharacterMovement->JumpZVelocity);
-}
-
 void APlayerCharacter::UseEnergy(float amount) {
 	characterEnergy -= amount;
 
@@ -582,8 +562,6 @@ void APlayerCharacter::UpdateLight() {
 	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
 	LifeLight->UpdateColorAndBrightness();
 
-	UE_LOG(LogClass, Log, TEXT("Attenuation Radius: %f"), LifeLight->AttenuationRadius);
-
 	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
 }
 
@@ -595,20 +573,7 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
-		TArray<AActor*> CollectedActors;
-		TestInteractable->GetMesh()->GetOverlappingActors(CollectedActors);
-
-		bool strongerEnemyInRange = false;
-
-		for (int i = 0; i < CollectedActors.Num(); ++i) {
-			const AEnemyAiCharacter* TestEnemy = Cast<AEnemyAiCharacter>(CollectedActors[i]);
-
-			if (TestEnemy && !TestEnemy->IsPendingKill()) {
-				// If enemy is stronger, strongerEnemyInrange = true; break;
-			}
-		}
-
-		if (!strongerEnemyInRange) TestInteractable->ChangeState(EInteractionState::Lit);
+		TestInteractable->CheckForCharacters();
 	}
 }
 
