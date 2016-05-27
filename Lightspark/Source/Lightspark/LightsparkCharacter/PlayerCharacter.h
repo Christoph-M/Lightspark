@@ -141,6 +141,8 @@ protected:
 
 	void Dash();
 
+	void DisableDash();
+
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
 	void UseEnergy(float amount);
@@ -296,6 +298,13 @@ protected:
 	float decelerationFactor;
 
 	/**
+	* Dash Speed (float)
+	* How fast the character dashes forward
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	float dashSpeed;
+
+	/**
 	* Dash Enabled Time (float)
 	* For how long the dash ability is active after sprint button has been released
 	*/
@@ -399,6 +408,13 @@ private:
 	bool isSprinting;
 
 	/**
+	* Can Dash (bool)
+	* Can the character currently perform a dash
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
+	bool canDash;
+
+	/**
 	* Sprint Key Hold Time (float)
 	* How long the sprint key has been held
 	*/
@@ -426,8 +442,6 @@ private:
 	FVector measureStart, measureEnd;
 
 	bool isInteracting, canSpend, canConsume;
-
-	float baseJumpHeight;
 
 	class AActor* interactedActor;
 };

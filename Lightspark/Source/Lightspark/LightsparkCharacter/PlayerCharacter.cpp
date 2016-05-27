@@ -41,6 +41,7 @@ APlayerCharacter::APlayerCharacter() {
 	fasterSprintSpeedFactor = 100.0f;
 	sprintEnergyConsume = 2.0f;
 	decelerationFactor = 1500.0f;
+	dashSpeed = 20.0f;
 	dashEnabledTime = 3.0f;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
@@ -59,6 +60,7 @@ APlayerCharacter::APlayerCharacter() {
 	JumpKeyHoldTime = 0.0f;
 	dashEnabled = false;
 	isDashing = false;
+	canDash = false;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
@@ -113,8 +115,6 @@ void APlayerCharacter::BeginPlay() {
 	CharacterMovement->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 
-	baseJumpHeight = CharacterMovement->JumpZVelocity;
-
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
 	this->UpdateLight();
@@ -126,9 +126,7 @@ void APlayerCharacter::BeginPlay() {
 		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
 	}
 
-	if (!GetWorld()->GetTimerManager().TimerExists(DisplayTimerHandle)) {
-		GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
-	}
+	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
 }
 
 void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
@@ -249,8 +247,7 @@ void APlayerCharacter::Interact() {
 		TArray<AActor*> CollectedActors;
 		GetInteractionSphere()->GetOverlappingActors(CollectedActors);
 
-		canSpend   = false;
-		canConsume = false;
+		canSpend = false; canConsume = false;
 
 		for (int i = 0; i < CollectedActors.Num(); ++i) {
 			APlayerLightInteractableFlower* const TestFlower = Cast<APlayerLightInteractableFlower>(CollectedActors[i]);
@@ -418,11 +415,17 @@ void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
 
 void APlayerCharacter::StartSprinting() {
 	if (!isInteracting) {
-		/*if (GetSprintEmpowermentActive(SEmp_Dash) && isSprinting) {
+		if (GetSprintEmpowermentActive(SEmp_Dash)) {
+			if (dashEnabled) {
+				GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::DisableDash, dashEnabledTime);
+				GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
+
+				canDash = true;
+			}
+
 			dashEnabled = true;
-			GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::Dash, dashEnabledTime);
-			GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
-		}*/
+		}
+
 		isSprinting = true;
 		UE_LOG(LogClass, Log, TEXT("Started sprinting"));
 		sprintKeyHoldTime = 0.0f;
@@ -431,7 +434,7 @@ void APlayerCharacter::StartSprinting() {
 
 void APlayerCharacter::StopSprinting() {
 	isSprinting = false;
-	//GetWorld()->GetTimerManager().UnPauseTimer(DashTimerHandle);
+	GetWorld()->GetTimerManager().UnPauseTimer(DashTimerHandle);
 	UE_LOG(LogClass, Log, TEXT("Stopped sprinting. Hold time: %f"), sprintKeyHoldTime);
 	sprintKeyHoldTime = 0.0f;
 }
@@ -448,6 +451,8 @@ void APlayerCharacter::CheckMovementInput(float deltaTime) {
 		this->SetCurrentMovementState(EMovementState::JumpGlide);
 	} else if (isJumping) {
 		this->SetCurrentMovementState(EMovementState::Jumping);
+	} else if (isSprinting && canDash) {
+		this->SetCurrentMovementState(EMovementState::SprintDash);
 	} else if (isSprinting) {
 		this->SetCurrentMovementState(EMovementState::Sprint);
 	} else if (*maxWalkSpeed > baseWalkSpeed) {
@@ -531,7 +536,14 @@ void APlayerCharacter::Sprint(float deltaTime) {
 }
 
 void APlayerCharacter::Dash() {
+	CharacterMovement->Velocity *= dashSpeed;
+
+	canDash = false;
+}
+
+void APlayerCharacter::DisableDash() {
 	dashEnabled = false;
+	canDash = false;
 	UE_LOG(LogClass, Log, TEXT("Dash disabled"));
 }
 
