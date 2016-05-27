@@ -117,6 +117,7 @@ protected:
 	void Interact();
 	void SpendEnergy();
 	void ConsumeEnergy();
+	void Merge();
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StartSprinting();
@@ -143,6 +144,8 @@ protected:
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
 	void ChangeJumpHeight();
+
+	void UseEnergy(float amount);
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -251,6 +254,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float glideSpeed;
 
+	/**
+	* Added Jump Height (float)
+	* Jump height to be added to JumpZVelocity when Empowerment is active
+	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Jump", Meta = (BlueprintProtected = "true"))
 	float addedJumpHeight;
 
@@ -268,6 +275,13 @@ protected:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float sprintSpeedFactor;
+
+	/**
+	* Faster Sprint Speed Factor (float)
+	* Speed increase (in percent) for faster sprint
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	float fasterSprintSpeedFactor;
 
 	/**
 	* Sprint Energy Consume (float)

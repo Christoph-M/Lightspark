@@ -7,6 +7,7 @@
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
+#include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -37,6 +38,7 @@ APlayerCharacter::APlayerCharacter() {
 	maxWalkSpeed = &GetCharacterMovement()->MaxWalkSpeed;
 	baseWalkSpeed = 600.0f;
 	sprintSpeedFactor = 50.0f;
+	fasterSprintSpeedFactor = 100.0f;
 	sprintEnergyConsume = 2.0f;
 	decelerationFactor = 1500.0f;
 	dashEnabledTime = 3.0f;
@@ -110,9 +112,6 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
-	this->SetSprintEmpowermentActive(SEmp_Dash, true);
-	this->SetJumpEmpowermentActive(JEmp_DoubleJump, true);
-	this->SetJumpEmpowermentActive(JEmp_Glide, true);
 
 	baseJumpHeight = CharacterMovement->JumpZVelocity;
 
@@ -260,6 +259,9 @@ void APlayerCharacter::Interact() {
 		TArray<AActor*> CollectedActors;
 		GetInteractionSphere()->GetOverlappingActors(CollectedActors);
 
+		canSpend   = false;
+		canConsume = false;
+
 		for (int i = 0; i < CollectedActors.Num(); ++i) {
 			APlayerLightInteractableFlower* const TestFlower = Cast<APlayerLightInteractableFlower>(CollectedActors[i]);
 
@@ -275,6 +277,19 @@ void APlayerCharacter::Interact() {
 
 				isInteracting = true;
 				CharacterMovement->DisableMovement();
+
+				return;
+			}
+
+
+			AFriendlyAiCharacter* const TestCharacter = Cast<AFriendlyAiCharacter>(CollectedActors[i]);
+
+			if (TestCharacter && !TestCharacter->IsPendingKill()) {
+				interactedActor = TestCharacter;
+				
+				this->Merge();
+
+				return;
 			}
 		}
 	} else {
@@ -290,8 +305,7 @@ void APlayerCharacter::SpendEnergy() {
 
 		Flower->ChangeState(EInteractionState::Lit);
 
-		characterEnergy -= spendEnergyConsume;
-		this->UpdateLight();
+		this->UseEnergy(spendEnergyConsume);
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -313,6 +327,47 @@ void APlayerCharacter::ConsumeEnergy() {
 	}
 }
 
+void APlayerCharacter::Merge() {
+	if (interactedActor && !interactedActor->IsPendingKill()) {
+		AFriendlyAiCharacter* const Friendly = Cast<AFriendlyAiCharacter>(interactedActor);
+		interactedActor = nullptr;
+
+		switch (Friendly->GetSprintEmpowerment()) {
+			case ESprintEmpowerment::FasterSprint:
+				SetSprintEmpowermentActive(SEmp_FasterSprint, true);
+				maxSprintSpeed = ((fasterSprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
+				UE_LOG(LogClass, Log, TEXT("Faster sprint activated.")); break;
+			case ESprintEmpowerment::SprintReducedCost:
+				SetSprintEmpowermentActive(SEmp_SprintReducedCost, true);
+				UE_LOG(LogClass, Log, TEXT("Reduced sprint cost activated.")); break;
+			case ESprintEmpowerment::Dash:
+				SetSprintEmpowermentActive(SEmp_Dash, true);
+				UE_LOG(LogClass, Log, TEXT("Dash activated.")); break;
+			case ESprintEmpowerment::Thrust:
+				SetSprintEmpowermentActive(SEmp_Thrust, true);
+				UE_LOG(LogClass, Log, TEXT("Thrust activated.")); break;
+		}
+
+		switch (Friendly->GetJumpEmpowerment()) {
+			case EJumpEmpowerment::DoubleJump:
+				SetJumpEmpowermentActive(JEmp_DoubleJump, true);
+				UE_LOG(LogClass, Log, TEXT("Double jump activated.")); break;
+			case EJumpEmpowerment::HigherJump:
+				SetJumpEmpowermentActive(JEmp_HigherJump, true);
+				CharacterMovement->JumpZVelocity += addedJumpHeight;
+				UE_LOG(LogClass, Log, TEXT("Higher jump activated.")); break;
+			case EJumpEmpowerment::JumpReducedCost:
+				SetJumpEmpowermentActive(JEmp_JumpReducedCost, true);
+				UE_LOG(LogClass, Log, TEXT("Reduced jump cost activated.")); break;
+			case EJumpEmpowerment::Glide:
+				SetJumpEmpowermentActive(JEmp_Glide, true);
+				UE_LOG(LogClass, Log, TEXT("Glide activated.")); break;
+		}
+
+		Friendly->Merge();
+	}
+}
+
 void APlayerCharacter::Jump() {
 	if (!isInteracting) {
 		if (!isJumping) {
@@ -322,7 +377,9 @@ void APlayerCharacter::Jump() {
 			jumpTime = 0.0f;
 		} else if (this->GetJumpEmpowermentActive(JEmp_DoubleJump) && !doubleJumped) {
 			canDoubleJump = true;
-		} else if (this->GetJumpEmpowermentActive(JEmp_Glide)) {
+		}
+		
+		if (this->GetJumpEmpowermentActive(JEmp_Glide)) {
 			isGliding = true;
 		}
 	}
@@ -425,8 +482,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 void APlayerCharacter::Jump(float deltaTime) {
 	if (characterEnergy > energyNeededForRune) {
-		characterEnergy -= jumpEnergyConsume;
-		this->UpdateLight();
+		this->UseEnergy(jumpEnergyConsume);
 	}
 
 	jumpTime += deltaTime;
@@ -446,8 +502,7 @@ void APlayerCharacter::DoubleJump() {
 	CharacterMovement->DoJump(false);
 
 	if (characterEnergy > energyNeededForRune) {
-		characterEnergy -= doubleJumpEnergyConsume;
-		this->UpdateLight();
+		this->UseEnergy(doubleJumpEnergyConsume);
 	}
 
 	doubleJumped = true;
@@ -464,8 +519,7 @@ void APlayerCharacter::Glide(float deltaTime) {
 
 void APlayerCharacter::Sprint(float deltaTime) {
 	if (characterEnergy > energyNeededForRune) {
-		characterEnergy -= sprintEnergyConsume * deltaTime;
-		this->UpdateLight();
+		this->UseEnergy(sprintEnergyConsume * deltaTime);
 	}
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
@@ -503,6 +557,12 @@ void APlayerCharacter::ChangeJumpHeight() {
 	}
 
 	UE_LOG(LogClass, Log, TEXT("Jump Vel: %f"), CharacterMovement->JumpZVelocity);
+}
+
+void APlayerCharacter::UseEnergy(float amount) {
+	characterEnergy -= amount;
+
+	this->UpdateLight();
 }
 
 void APlayerCharacter::UpdateLight() {
