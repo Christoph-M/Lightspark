@@ -363,6 +363,16 @@ void APlayerCharacter::Merge() {
 				SetJumpEmpowermentActive(JEmp_Glide, true);
 				UE_LOG(LogClass, Log, TEXT("Glide activated.")); break;
 		}
+		UE_LOG(LogClass, Log, TEXT("Current Max Energy: %f"), currentMaxEnergy);
+		currentMaxEnergy += energyNeededForRune;
+
+		if (currentMaxEnergy >= maxEnergy) currentMaxEnergy = maxEnergy;
+
+		characterEnergy = currentMaxEnergy;
+
+		this->UpdateLight();
+
+		UE_LOG(LogClass, Log, TEXT("Current Max Energy: %f"), currentMaxEnergy);
 
 		Friendly->Merge();
 	}
@@ -571,6 +581,8 @@ void APlayerCharacter::UpdateLight() {
 	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
 	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
 	LifeLight->UpdateColorAndBrightness();
+
+	UE_LOG(LogClass, Log, TEXT("Attenuation Radius: %f"), LifeLight->AttenuationRadius);
 
 	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
 }
