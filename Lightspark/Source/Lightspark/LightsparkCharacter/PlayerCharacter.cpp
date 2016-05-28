@@ -350,16 +350,13 @@ void APlayerCharacter::Merge() {
 				SetJumpEmpowermentActive(JEmp_Glide, true);
 				UE_LOG(LogClass, Log, TEXT("Glide activated.")); break;
 		}
-		UE_LOG(LogClass, Log, TEXT("Current Max Energy: %f"), currentMaxEnergy);
-		currentMaxEnergy += energyNeededForRune;
 
+		currentMaxEnergy += energyNeededForRune;
 		if (currentMaxEnergy >= maxEnergy) currentMaxEnergy = maxEnergy;
 
 		characterEnergy = currentMaxEnergy;
 
 		this->UpdateLight();
-
-		UE_LOG(LogClass, Log, TEXT("Current Max Energy: %f"), currentMaxEnergy);
 
 		Friendly->Merge();
 	}
@@ -442,23 +439,23 @@ void APlayerCharacter::StopSprinting() {
 
 void APlayerCharacter::CheckMovementInput(float deltaTime) {
 	if (GetVelocity().IsZero()) {
-		this->SetCurrentMovementState(EMovementState::Default);
+		if (this->GetCurrentMovementState() != EMovementState::Default)		this->SetCurrentMovementState(EMovementState::Default);
 	} else if (isJumping && jumpTime == 0.0f) {
-		this->SetCurrentMovementState(EMovementState::Jump);
+		if (this->GetCurrentMovementState() != EMovementState::Jump)		this->SetCurrentMovementState(EMovementState::Jump);
 	} else if (isJumping && canDoubleJump) {
-		this->SetCurrentMovementState(EMovementState::DoubleJump);
+		if (this->GetCurrentMovementState() != EMovementState::DoubleJump)	this->SetCurrentMovementState(EMovementState::DoubleJump);
 	} else if (isJumping && isGliding && isFalling) {
-		this->SetCurrentMovementState(EMovementState::JumpGlide);
+		if (this->GetCurrentMovementState() != EMovementState::JumpGlide)	this->SetCurrentMovementState(EMovementState::JumpGlide);
 	} else if (isJumping) {
-		this->SetCurrentMovementState(EMovementState::Jumping);
+		if (this->GetCurrentMovementState() != EMovementState::Jumping)		this->SetCurrentMovementState(EMovementState::Jumping);
 	} else if (isSprinting && canDash) {
-		this->SetCurrentMovementState(EMovementState::SprintDash);
+		if (this->GetCurrentMovementState() != EMovementState::SprintDash)	this->SetCurrentMovementState(EMovementState::SprintDash);
 	} else if (isSprinting) {
-		this->SetCurrentMovementState(EMovementState::Sprint);
+		if (this->GetCurrentMovementState() != EMovementState::Sprint)		this->SetCurrentMovementState(EMovementState::Sprint);
 	} else if (*maxWalkSpeed > baseWalkSpeed) {
-		this->SetCurrentMovementState(EMovementState::StopSprint);
+		if (this->GetCurrentMovementState() != EMovementState::StopSprint)	this->SetCurrentMovementState(EMovementState::StopSprint);
 	} else {
-		this->SetCurrentMovementState(EMovementState::Moving);
+		if (this->GetCurrentMovementState() != EMovementState::Moving)		this->SetCurrentMovementState(EMovementState::Moving);
 	}
 }
 
@@ -466,7 +463,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 	switch (this->GetCurrentMovementState()) {
 		case EMovementState::Default: break;
 		case EMovementState::DoubleJump:
-			this->DoubleJump(); break;
+			this->DoubleJump(deltaTime); break;
 		case EMovementState::Jump:
 			this->Jump(deltaTime); break;
 		case EMovementState::JumpGlide:
@@ -499,7 +496,7 @@ void APlayerCharacter::Jumping(float deltaTime) {
 	jumpTime += deltaTime;
 }
 
-void APlayerCharacter::DoubleJump() {
+void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->GravityScale = 1.0f;
 
 	// HAAAAAX!!!!
@@ -514,6 +511,8 @@ void APlayerCharacter::DoubleJump() {
 	canDoubleJump = false;
 
 	CharacterMovement->bNotifyApex = true;
+
+	jumpTime += deltaTime;
 }
 
 void APlayerCharacter::Glide(float deltaTime) {

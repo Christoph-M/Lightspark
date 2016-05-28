@@ -133,7 +133,7 @@ protected:
 
 	void Jumping(float deltaTime);
 
-	void DoubleJump();
+	void DoubleJump(float deltaTime);
 
 	void Glide(float deltaTime);
 
