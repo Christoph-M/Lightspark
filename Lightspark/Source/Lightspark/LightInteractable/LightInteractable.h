@@ -33,8 +33,8 @@ public:
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return InteractableMesh; }
 	FORCEINLINE class UPointLightComponent* GetLight() const { return PointLight; }
 
-	class AActor* GetTriggeredActor() const { return TriggeredActor; }
-	class APawn* GetTriggeredCharacter() const { return TriggeredCharacter; }
+	class ATriggeredActor* GetTriggeredActor() const { return TriggeredActor; }
+	class ALightsparkCharacter* GetTriggeredCharacter() const { return TriggeredCharacter; }
 
 	EInteractionState GetTriggerActorOnStateChange() { return TriggerActorOnStateChange; }
 	EInteractionState GetTriggerCharacterOnStateChange() { return TriggerCharacterOnStateChange; }
@@ -79,18 +79,18 @@ private:
 	class UPointLightComponent* PointLight;
 
 	/**
-	* Triggered Actor (class AActor*)
-	* Actor to be triggered by state change. Must be of type ATriggeredActor.
+	* Triggered Actor (class ATriggeredActor*)
+	* Actor to be triggered by state change.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
-	class AActor* TriggeredActor;
+	class ATriggeredActor* TriggeredActor;
 
 	/**
-	* Triggered Character (class APawn*)
-	* If an enemy character should be lured, set the respective character here. Must be of type ALightsparkCharacter.
+	* Triggered Character (class ALightsparkCharacter*)
+	* If an enemy character should be lured, set the respective character here.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
-	class APawn* TriggeredCharacter;
+	class ALightsparkCharacter* TriggeredCharacter;
 
 	/**
 	* Trigger Actor On State Change (TEnumAsByte<EInteractionState>)
