@@ -41,6 +41,7 @@ APlayerCharacter::APlayerCharacter() {
 	fasterSprintSpeedFactor = 100.0f;
 	sprintEnergyConsume = 2.0f;
 	decelerationFactor = 1500.0f;
+	dashSpeed = 20.0f;
 	dashEnabledTime = 3.0f;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
@@ -59,6 +60,7 @@ APlayerCharacter::APlayerCharacter() {
 	JumpKeyHoldTime = 0.0f;
 	dashEnabled = false;
 	isDashing = false;
+	canDash = false;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
@@ -113,12 +115,6 @@ void APlayerCharacter::BeginPlay() {
 	CharacterMovement->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 
-	baseJumpHeight = CharacterMovement->JumpZVelocity;
-
-	if (!GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
-		GetInteractionSphere()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
-	}
-
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
 	this->UpdateLight();
@@ -130,16 +126,10 @@ void APlayerCharacter::BeginPlay() {
 		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
 	}
 
-	if (!GetWorld()->GetTimerManager().TimerExists(DisplayTimerHandle)) {
-		GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
-	}
+	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
 }
 
 void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	if (GetInteractionSphere()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::EvaluateLightInteraction)) {
-		GetInteractionSphere()->OnComponentBeginOverlap.RemoveDynamic(this, &APlayerCharacter::EvaluateLightInteraction);
-	}
-
 	if (OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
 		OnReachedJumpApex.RemoveDynamic(this, &APlayerCharacter::JumpApex);
 	}
@@ -190,8 +180,6 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	// handle touch devices
 	InputComponent->BindTouch(IE_Pressed, this, &APlayerCharacter::TouchStarted);
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
-
-	InputComponent->BindAction("JumpPower", IE_Pressed, this, &APlayerCharacter::ChangeJumpHeight);
 }
 
 
@@ -259,8 +247,7 @@ void APlayerCharacter::Interact() {
 		TArray<AActor*> CollectedActors;
 		GetInteractionSphere()->GetOverlappingActors(CollectedActors);
 
-		canSpend   = false;
-		canConsume = false;
+		canSpend = false; canConsume = false;
 
 		for (int i = 0; i < CollectedActors.Num(); ++i) {
 			APlayerLightInteractableFlower* const TestFlower = Cast<APlayerLightInteractableFlower>(CollectedActors[i]);
@@ -363,16 +350,13 @@ void APlayerCharacter::Merge() {
 				SetJumpEmpowermentActive(JEmp_Glide, true);
 				UE_LOG(LogClass, Log, TEXT("Glide activated.")); break;
 		}
-		UE_LOG(LogClass, Log, TEXT("Current Max Energy: %f"), currentMaxEnergy);
-		currentMaxEnergy += energyNeededForRune;
 
+		currentMaxEnergy += energyNeededForRune;
 		if (currentMaxEnergy >= maxEnergy) currentMaxEnergy = maxEnergy;
 
 		characterEnergy = currentMaxEnergy;
 
 		this->UpdateLight();
-
-		UE_LOG(LogClass, Log, TEXT("Current Max Energy: %f"), currentMaxEnergy);
 
 		Friendly->Merge();
 	}
@@ -428,11 +412,17 @@ void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
 
 void APlayerCharacter::StartSprinting() {
 	if (!isInteracting) {
-		/*if (GetSprintEmpowermentActive(SEmp_Dash) && isSprinting) {
+		if (GetSprintEmpowermentActive(SEmp_Dash)) {
+			if (dashEnabled) {
+				GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::DisableDash, dashEnabledTime);
+				GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
+
+				canDash = true;
+			}
+
 			dashEnabled = true;
-			GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::Dash, dashEnabledTime);
-			GetWorld()->GetTimerManager().PauseTimer(DashTimerHandle);
-		}*/
+		}
+
 		isSprinting = true;
 		UE_LOG(LogClass, Log, TEXT("Started sprinting"));
 		sprintKeyHoldTime = 0.0f;
@@ -441,7 +431,7 @@ void APlayerCharacter::StartSprinting() {
 
 void APlayerCharacter::StopSprinting() {
 	isSprinting = false;
-	//GetWorld()->GetTimerManager().UnPauseTimer(DashTimerHandle);
+	GetWorld()->GetTimerManager().UnPauseTimer(DashTimerHandle);
 	UE_LOG(LogClass, Log, TEXT("Stopped sprinting. Hold time: %f"), sprintKeyHoldTime);
 	sprintKeyHoldTime = 0.0f;
 }
@@ -449,21 +439,23 @@ void APlayerCharacter::StopSprinting() {
 
 void APlayerCharacter::CheckMovementInput(float deltaTime) {
 	if (GetVelocity().IsZero()) {
-		this->SetCurrentMovementState(EMovementState::Default);
+		if (this->GetCurrentMovementState() != EMovementState::Default)		this->SetCurrentMovementState(EMovementState::Default);
 	} else if (isJumping && jumpTime == 0.0f) {
-		this->SetCurrentMovementState(EMovementState::Jump);
+		if (this->GetCurrentMovementState() != EMovementState::Jump)		this->SetCurrentMovementState(EMovementState::Jump);
 	} else if (isJumping && canDoubleJump) {
-		this->SetCurrentMovementState(EMovementState::DoubleJump);
+		if (this->GetCurrentMovementState() != EMovementState::DoubleJump)	this->SetCurrentMovementState(EMovementState::DoubleJump);
 	} else if (isJumping && isGliding && isFalling) {
-		this->SetCurrentMovementState(EMovementState::JumpGlide);
+		if (this->GetCurrentMovementState() != EMovementState::JumpGlide)	this->SetCurrentMovementState(EMovementState::JumpGlide);
 	} else if (isJumping) {
-		this->SetCurrentMovementState(EMovementState::Jumping);
+		if (this->GetCurrentMovementState() != EMovementState::Jumping)		this->SetCurrentMovementState(EMovementState::Jumping);
+	} else if (isSprinting && canDash) {
+		if (this->GetCurrentMovementState() != EMovementState::SprintDash)	this->SetCurrentMovementState(EMovementState::SprintDash);
 	} else if (isSprinting) {
-		this->SetCurrentMovementState(EMovementState::Sprint);
+		if (this->GetCurrentMovementState() != EMovementState::Sprint)		this->SetCurrentMovementState(EMovementState::Sprint);
 	} else if (*maxWalkSpeed > baseWalkSpeed) {
-		this->SetCurrentMovementState(EMovementState::StopSprint);
+		if (this->GetCurrentMovementState() != EMovementState::StopSprint)	this->SetCurrentMovementState(EMovementState::StopSprint);
 	} else {
-		this->SetCurrentMovementState(EMovementState::Moving);
+		if (this->GetCurrentMovementState() != EMovementState::Moving)		this->SetCurrentMovementState(EMovementState::Moving);
 	}
 }
 
@@ -471,7 +463,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 	switch (this->GetCurrentMovementState()) {
 		case EMovementState::Default: break;
 		case EMovementState::DoubleJump:
-			this->DoubleJump(); break;
+			this->DoubleJump(deltaTime); break;
 		case EMovementState::Jump:
 			this->Jump(deltaTime); break;
 		case EMovementState::JumpGlide:
@@ -504,7 +496,7 @@ void APlayerCharacter::Jumping(float deltaTime) {
 	jumpTime += deltaTime;
 }
 
-void APlayerCharacter::DoubleJump() {
+void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->GravityScale = 1.0f;
 
 	// HAAAAAX!!!!
@@ -519,6 +511,8 @@ void APlayerCharacter::DoubleJump() {
 	canDoubleJump = false;
 
 	CharacterMovement->bNotifyApex = true;
+
+	jumpTime += deltaTime;
 }
 
 void APlayerCharacter::Glide(float deltaTime) {
@@ -541,7 +535,14 @@ void APlayerCharacter::Sprint(float deltaTime) {
 }
 
 void APlayerCharacter::Dash() {
+	CharacterMovement->Velocity *= dashSpeed;
+
+	canDash = false;
+}
+
+void APlayerCharacter::DisableDash() {
 	dashEnabled = false;
+	canDash = false;
 	UE_LOG(LogClass, Log, TEXT("Dash disabled"));
 }
 
@@ -559,16 +560,6 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 	}
 }
 
-void APlayerCharacter::ChangeJumpHeight() {
-	if (CharacterMovement->JumpZVelocity < baseJumpHeight + addedJumpHeight) {
-		CharacterMovement->JumpZVelocity += addedJumpHeight;
-	} else {
-		CharacterMovement->JumpZVelocity = baseJumpHeight;
-	}
-
-	UE_LOG(LogClass, Log, TEXT("Jump Vel: %f"), CharacterMovement->JumpZVelocity);
-}
-
 void APlayerCharacter::UseEnergy(float amount) {
 	characterEnergy -= amount;
 
@@ -582,8 +573,6 @@ void APlayerCharacter::UpdateLight() {
 	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
 	LifeLight->UpdateColorAndBrightness();
 
-	UE_LOG(LogClass, Log, TEXT("Attenuation Radius: %f"), LifeLight->AttenuationRadius);
-
 	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
 }
 
@@ -595,26 +584,21 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
-		TArray<AActor*> CollectedActors;
-		TestInteractable->GetMesh()->GetOverlappingActors(CollectedActors);
-
-		bool strongerEnemyInRange = false;
-
-		for (int i = 0; i < CollectedActors.Num(); ++i) {
-			const AEnemyAiCharacter* TestEnemy = Cast<AEnemyAiCharacter>(CollectedActors[i]);
-
-			if (TestEnemy && !TestEnemy->IsPendingKill()) {
-				// If enemy is stronger, strongerEnemyInrange = true; break;
-			}
-		}
-
-		if (!strongerEnemyInRange) TestInteractable->ChangeState(EInteractionState::Lit);
+		TestInteractable->CheckForCharacters();
 	}
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
+	if (GetSprintEmpowermentActive(0)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Faster Sprint active.")));
+	if (GetSprintEmpowermentActive(1)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Reduced Sprint Cost active.")));
+	if (GetSprintEmpowermentActive(2)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Dash active.")));
+	if (GetSprintEmpowermentActive(3)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Thrust active.")));
+	if (GetJumpEmpowermentActive(0)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Double Jump active.")));
+	if (GetJumpEmpowermentActive(1)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Higher Jump active.")));
+	if (GetJumpEmpowermentActive(2)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Reduced Jump Cost active.")));
+	if (GetJumpEmpowermentActive(3)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Glide active.")));
 	if (isInteracting && canSpend) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Cyan, FString::Printf(TEXT("Press Shift to spend.")));
 	if (isInteracting && canConsume) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Cyan, FString::Printf(TEXT("Press Space to consume.")));
 }
