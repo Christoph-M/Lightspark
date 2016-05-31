@@ -591,6 +591,14 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 void APlayerCharacter::DisplayCurrentStates() {
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
+	if (GetSprintEmpowermentActive(0)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Faster Sprint active.")));
+	if (GetSprintEmpowermentActive(1)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Reduced Sprint Cost active.")));
+	if (GetSprintEmpowermentActive(2)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Dash active.")));
+	if (GetSprintEmpowermentActive(3)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Thrust active.")));
+	if (GetJumpEmpowermentActive(0)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Double Jump active.")));
+	if (GetJumpEmpowermentActive(1)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Higher Jump active.")));
+	if (GetJumpEmpowermentActive(2)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Reduced Jump Cost active.")));
+	if (GetJumpEmpowermentActive(3)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Glide active.")));
 	if (isInteracting && canSpend) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Cyan, FString::Printf(TEXT("Press Shift to spend.")));
 	if (isInteracting && canConsume) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Cyan, FString::Printf(TEXT("Press Space to consume.")));
 }
