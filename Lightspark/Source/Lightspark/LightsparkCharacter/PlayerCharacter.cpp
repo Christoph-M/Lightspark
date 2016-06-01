@@ -66,6 +66,11 @@ APlayerCharacter::APlayerCharacter() {
 	maxLightRange = 2000.0f;
 	minLightTemp = 1000.0f;
 	maxLightTemp = 12000.0f;
+	lifeLightDecTime = 1.0f;
+	lifeLightNeedsUpdate = false;
+	lightColorFade = 0.0f;
+	lightColorOffset = 2500.0f;
+	lightColorFadeTime = 0.1f;
 
 	isInteracting = false;
 	canSpend = false;
@@ -107,6 +112,7 @@ void APlayerCharacter::BeginPlay() {
 
 	if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 	if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+	lightEnergy = characterEnergy;
 
 	characterRunes = characterEnergy / energyNeededForRune;
 
@@ -117,7 +123,7 @@ void APlayerCharacter::BeginPlay() {
 
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
-	this->UpdateLight();
+	this->InitLight();
 	
 	if (!OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
 		OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
@@ -147,6 +153,18 @@ void APlayerCharacter::Tick(float deltaTime) {
 
 	this->CheckMovementInput(deltaTime);
 	this->EvaluateMovementState(deltaTime);
+
+	if (lifeLightNeedsUpdate) this->UpdateLight(deltaTime);
+}
+
+void APlayerCharacter::InitLight() {
+	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+
+	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
+	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->UpdateColorAndBrightness();
+
+	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -306,8 +324,9 @@ void APlayerCharacter::ConsumeEnergy() {
 
 		Flower->ChangeState(EInteractionState::Destroyed);
 
+		lightEnergy = characterEnergy;
 		characterEnergy += consumeEnergyGain;
-		this->UpdateLight();
+		this->ActivateLightUpdate();
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -354,9 +373,9 @@ void APlayerCharacter::Merge() {
 		currentMaxEnergy += energyNeededForRune;
 		if (currentMaxEnergy >= maxEnergy) currentMaxEnergy = maxEnergy;
 
+		lightEnergy = characterEnergy;
 		characterEnergy = currentMaxEnergy;
-
-		this->UpdateLight();
+		this->ActivateLightUpdate();
 
 		Friendly->Merge();
 	}
@@ -561,19 +580,45 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 }
 
 void APlayerCharacter::UseEnergy(float amount) {
+	lightEnergy = characterEnergy;
 	characterEnergy -= amount;
 
-	this->UpdateLight();
+	this->ActivateLightUpdate();
 }
 
-void APlayerCharacter::UpdateLight() {
-	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+void APlayerCharacter::ActivateLightUpdate() {
+	lifeLightNeedsUpdate = true;
+	initialLightEnergy = lightEnergy;
+}
 
-	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
-	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
-	LifeLight->UpdateColorAndBrightness();
+void APlayerCharacter::UpdateLight(float deltaTime) {
+	if (lightEnergy > characterEnergy) {
+		lightEnergy -= (initialLightEnergy - characterEnergy) / lifeLightDecTime * deltaTime;
+		lightColorFade += 5000.0f / 0.2f * deltaTime;
 
-	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+		if (lightColorFade >= 5000.0f) lightColorFade = 5000.0f;
+	}
+
+	if (lightEnergy <= characterEnergy) {
+		lightEnergy = characterEnergy;
+		lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
+		
+		if (lightColorFade <= 0.0f) lightColorFade = 0.0f;
+	}
+
+	if (lightColorFade != 0.0f) {
+		lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+
+		LifeLight->AttenuationRadius = minLightRange + lightEnergy * lightRangeFactor;
+		LifeLight->Temperature = minLightTemp + lightEnergy * lightTempFactor - lightColorFade;
+		LifeLight->UpdateColorAndBrightness();
+		LifeLight->UpdateComponentToWorld();
+
+		GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+	} else {
+		lifeLightNeedsUpdate = false;
+		this->InitLight();
+	}
 }
 
 void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {

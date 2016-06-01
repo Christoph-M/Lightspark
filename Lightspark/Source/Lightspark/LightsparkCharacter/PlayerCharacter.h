@@ -161,7 +161,11 @@ private:
 	UFUNCTION()
 	void JumpLanded(const FHitResult& Hit);
 
-	void UpdateLight();
+	void InitLight();
+
+	void ActivateLightUpdate();
+
+	void UpdateLight(float deltaTime);
 
 	void DisplayCurrentStates();
 
@@ -224,6 +228,27 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float maxLightTemp;
+
+	/**
+	* Life Light Decrement Time (float)
+	* The time (in seconds) it takes the life light to decrease to current character energy
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float lifeLightDecTime;
+
+	/**
+	* Light Color Offset (float)
+	* Color fade amount when character energy changes
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float lightColorOffset;
+
+	/**
+	* Light Color Fade Time (float)
+	* The time (in seconds) it takes to fade the light color to lightColorOffset
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float lightColorFadeTime;
 
 
 	/**
@@ -333,6 +358,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
 	float lightTempFactor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightEnergy;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	bool lifeLightNeedsUpdate;
+
 
 	EMovementState CurrentMovementState;
 
@@ -436,6 +467,8 @@ private:
 	bool isDashing;
 
 	float* maxWalkSpeed;
+
+	float lightColorFade, initialLightEnergy;
 
 	FTimerHandle DashTimerHandle, DisplayTimerHandle;
 
