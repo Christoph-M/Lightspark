@@ -3,6 +3,14 @@
 #include "GameFramework/GameMode.h"
 #include "LightsparkGameMode.generated.h"
 
+UENUM(BlueprintType)
+enum class ELightsparkPlayState {
+	Playing,
+	GameOver,
+	Won,
+	Unknown
+};
+
 UCLASS(minimalapi)
 class ALightsparkGameMode : public AGameMode
 {
@@ -10,7 +18,16 @@ class ALightsparkGameMode : public AGameMode
 
 public:
 	ALightsparkGameMode();
+
+	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintPure, Category = "Lightspark")
+	ELightsparkPlayState GetCurrentPlayState() const { return CurrentState; }
+
+	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
+
+private:
+	ELightsparkPlayState CurrentState;
 };
-
-
-
