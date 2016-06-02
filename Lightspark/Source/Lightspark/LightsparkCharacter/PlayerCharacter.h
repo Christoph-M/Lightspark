@@ -20,6 +20,17 @@ enum class EMovementState {
 };
 
 UENUM(BlueprintType)
+enum class ELightUpdateState {
+	NoUpdate,
+	UpdateStart,
+	UpdateDecFadeIn,
+	UpdateDecFadeOut,
+	UpdateIncFadeIn,
+	UpdateIncFadeOut,
+	UpdateEnd
+};
+
+UENUM(BlueprintType)
 enum ESprintEmpowerments {
 	SEmp_FasterSprint,
 	SEmp_SprintReducedCost,
@@ -366,6 +377,8 @@ private:
 
 
 	EMovementState CurrentMovementState;
+
+	ELightUpdateState CurrentLightUpdateState;
 
 	/**
 	* Sprint Empowerment Active (TArray<bool>)
