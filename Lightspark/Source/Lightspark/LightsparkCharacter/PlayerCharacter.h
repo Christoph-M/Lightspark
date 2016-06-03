@@ -80,10 +80,17 @@ public:
 
 	FORCEINLINE class UPointLightComponent* GetLifeLight() const { return LifeLight; }
 
+	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
+
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
 	void SetCurrentMovementState(EMovementState NewState) { CurrentMovementState = NewState; }
+
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
 	virtual void Jump() override;
@@ -92,11 +99,6 @@ public:
 	virtual void StopJumping() override;
 
 protected:
-	UFUNCTION(BlueprintPure, Category = "Empowerment")
-	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
-	UFUNCTION(BlueprintPure, Category = "Empowerment")
-	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
-
 	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }
 	void SetJumpEmpowermentActive(int i, bool active) { JumpEmpowermentActive[i] = active; }
 

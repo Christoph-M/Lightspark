@@ -28,6 +28,10 @@ public:
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
+	void SaveGame();
+
+	class UPlayerSave* LoadGame();
+
 private:
 	ELightsparkPlayState CurrentState;
 };

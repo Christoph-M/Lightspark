@@ -8,6 +8,7 @@
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
+#include "PlayerSave.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -108,10 +109,30 @@ APlayerCharacter::APlayerCharacter() {
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
 
-	CharacterMovement = GetCharacterMovement();
+	UPlayerSave* PlayerLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
+	
+	if (PlayerLoadInstance) {
+		SetActorLocation(PlayerLoadInstance->CharacterLocation);
+		SetActorRotation(PlayerLoadInstance->CharacterRotation);
 
-	if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
-	if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+		CameraBoom->SetRelativeRotation(PlayerLoadInstance->CameraBoomRotation);
+		FollowCamera->SetRelativeLocation(PlayerLoadInstance->CameraLocation);
+		FollowCamera->SetRelativeRotation(PlayerLoadInstance->CameraRotation);
+
+		currentMaxEnergy = PlayerLoadInstance->currentMaxEnergy;
+		characterEnergy = PlayerLoadInstance->characterEnergy;
+
+		for (int i = 0; i < 4; ++i) {
+			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->SprintEmpowermentActive[i]);
+			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->JumpEmpowermentActive[i]);
+		}
+	} else {
+		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
+		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+	}
+
+	CharacterMovement = GetCharacterMovement();
+	
 	lightEnergy = characterEnergy;
 
 	characterRunes = characterEnergy / energyNeededForRune;
@@ -294,6 +315,10 @@ void APlayerCharacter::Interact() {
 				interactedActor = TestCharacter;
 				
 				this->Merge();
+
+				ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+				GameModeInstance->SaveGame();
 
 				return;
 			}
