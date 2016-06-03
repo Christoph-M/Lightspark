@@ -28,9 +28,9 @@ public:
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
-	void SaveGame();
+	void SaveGame(FString const &slotName = "DefaultSlot", uint32 const userIndex = 0);
 
-	class UPlayerSave* LoadGame();
+	class UPlayerSave* LoadGame(FString const &slotName = "DefaultSlot", uint32 const userIndex = 0);
 
 private:
 	ELightsparkPlayState CurrentState;

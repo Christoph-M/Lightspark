@@ -39,10 +39,12 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 	}
 }
 
-void ALightsparkGameMode::SaveGame() {
+void ALightsparkGameMode::SaveGame(FString const &slotName, uint32 const userIndex) {
 	APlayerCharacter* MyCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
 	UPlayerSave* PlayerSaveInstance = Cast<UPlayerSave>(UGameplayStatics::CreateSaveGameObject(UPlayerSave::StaticClass()));
+	PlayerSaveInstance->SaveSlotName = slotName;
+	PlayerSaveInstance->UserIndex = userIndex;
 
 	PlayerSaveInstance->LevelName = GetWorld()->GetMapName();
 
@@ -64,8 +66,13 @@ void ALightsparkGameMode::SaveGame() {
 	UGameplayStatics::SaveGameToSlot(PlayerSaveInstance, PlayerSaveInstance->SaveSlotName, PlayerSaveInstance->UserIndex);
 }
 
-UPlayerSave* ALightsparkGameMode::LoadGame() {
+UPlayerSave* ALightsparkGameMode::LoadGame(FString const &slotName, uint32 const userIndex) {
 	UPlayerSave* PlayerLoadInstance = Cast<UPlayerSave>(UGameplayStatics::CreateSaveGameObject(UPlayerSave::StaticClass()));
-	PlayerLoadInstance = Cast<UPlayerSave>(UGameplayStatics::LoadGameFromSlot(PlayerLoadInstance->SaveSlotName, PlayerLoadInstance->UserIndex));
-	return PlayerLoadInstance;
+	PlayerLoadInstance = Cast<UPlayerSave>(UGameplayStatics::LoadGameFromSlot(slotName, userIndex));
+
+	if (PlayerLoadInstance) {
+		return PlayerLoadInstance;
+	} else {
+		return nullptr;
+	}
 }

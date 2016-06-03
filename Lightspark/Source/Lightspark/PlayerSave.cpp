@@ -8,7 +8,3 @@ UPlayerSave::UPlayerSave() {
 	SaveSlotName = TEXT("DefaultSlot");
 	UserIndex = 0;
 }
-
-UPlayerSave::UPlayerSave(FString &slotName, uint32 userIndex) :
-	SaveSlotName(slotName),
-	UserIndex(userIndex) {}

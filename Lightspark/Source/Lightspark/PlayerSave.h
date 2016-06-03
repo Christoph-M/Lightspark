@@ -15,7 +15,6 @@ class LIGHTSPARK_API UPlayerSave : public USaveGame
 
 public:
 	UPlayerSave();
-	UPlayerSave(FString &slotName, uint32 userIndex);
 	
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Basic")
