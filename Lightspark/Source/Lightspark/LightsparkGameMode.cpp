@@ -19,6 +19,12 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 
+	/*UPlayerSave* PlayerLoadInstance = this->LoadGame();
+
+	if (PlayerLoadInstance) {
+		UGameplayStatics::OpenLevel(this, FName(*PlayerLoadInstance->LevelName));
+	}*/
+
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }
 
@@ -38,7 +44,7 @@ void ALightsparkGameMode::SaveGame() {
 
 	UPlayerSave* PlayerSaveInstance = Cast<UPlayerSave>(UGameplayStatics::CreateSaveGameObject(UPlayerSave::StaticClass()));
 
-	PlayerSaveInstance->LevelName = GetWorld()->GetCurrentLevel()->GetName();
+	PlayerSaveInstance->LevelName = GetWorld()->GetMapName();
 
 	PlayerSaveInstance->CharacterLocation = MyCharacter->GetActorLocation();
 	PlayerSaveInstance->CharacterRotation = MyCharacter->GetActorRotation();
