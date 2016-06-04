@@ -25,7 +25,7 @@ public:
 
 
 	UPROPERTY(VisibleAnywhere, Category = "Location")
-	FString LevelName;
+	FName LevelName;
 
 	UPROPERTY(VisibleAnywhere, Category = "Location")
 	FVector CharacterLocation;

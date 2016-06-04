@@ -19,11 +19,11 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 
-	/*UPlayerSave* PlayerLoadInstance = this->LoadGame();
+	UPlayerSave* PlayerLoadInstance = this->LoadGame();
 
 	if (PlayerLoadInstance) {
-		UGameplayStatics::OpenLevel(this, FName(*PlayerLoadInstance->LevelName));
-	}*/
+		UGameplayStatics::OpenLevel(this, PlayerLoadInstance->LevelName);
+	}
 
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }
@@ -46,7 +46,18 @@ void ALightsparkGameMode::SaveGame(FString const &slotName, uint32 const userInd
 	PlayerSaveInstance->SaveSlotName = slotName;
 	PlayerSaveInstance->UserIndex = userIndex;
 
-	PlayerSaveInstance->LevelName = GetWorld()->GetMapName();
+
+	FStringAssetReference levelPath = FStringAssetReference(GetWorld()->GetCurrentLevel());
+
+	FString str = levelPath.ToString();
+	//str.RemoveAt(0, 11);
+	//str.RemoveAt(str.Find(TEXT(":"), ESearchCase::IgnoreCase, ESearchDir::FromEnd), 16);
+	str.ReplaceInline(TEXT("/Game/Maps/"), TEXT(""));
+	str.ReplaceInline(TEXT(":PersistentLevel"), TEXT(""));
+
+	PlayerSaveInstance->LevelName = FName(*str);
+	UE_LOG(LogClass, Log, TEXT("Level Path: %s"), *PlayerSaveInstance->LevelName.ToString());
+
 
 	PlayerSaveInstance->CharacterLocation = MyCharacter->GetActorLocation();
 	PlayerSaveInstance->CharacterRotation = MyCharacter->GetActorRotation();
