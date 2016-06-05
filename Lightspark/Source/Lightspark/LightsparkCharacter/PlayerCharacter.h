@@ -85,6 +85,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
+	UFUNCTION(BlueprintPure, Category = "Light")
+	ELightUpdateState GetCurrentLightUpdateState() { return CurrentLightUpdateState; }
+
 	void SetCurrentMovementState(EMovementState NewState) { CurrentMovementState = NewState; }
 
 	UFUNCTION(BlueprintPure, Category = "Empowerment")
@@ -250,11 +253,11 @@ protected:
 	float lifeLightDecTime;
 
 	/**
-	* Light Color Offset (float)
-	* Color fade amount when character energy changes
+	* Light Color Offset Factor (float)
+	* Color fade amount (in percent) when character energy changes
 	*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
-	float lightColorOffset;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true", ClampMin = "0.0", ClampMax = "1.0"))
+	float lightColorOffsetFac;
 
 	/**
 	* Light Color Fade Time (float)
@@ -262,6 +265,9 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float lightColorFadeTime;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	UCurveFloat* FlickerCurve;
 
 
 	/**
@@ -376,6 +382,15 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
 	bool lifeLightNeedsUpdate;
+
+	/**
+	* Light Color Offset (float)
+	* Color fade amount when character energy changes
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightColorOffset;
+
+	float lightUpdateTime;
 
 
 	EMovementState CurrentMovementState;

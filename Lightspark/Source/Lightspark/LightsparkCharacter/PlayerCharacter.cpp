@@ -70,8 +70,10 @@ APlayerCharacter::APlayerCharacter() {
 	lifeLightDecTime = 1.0f;
 	lifeLightNeedsUpdate = false;
 	lightColorFade = 0.0f;
+	lightColorOffsetFac = 0.4f;
 	lightColorOffset = 2500.0f;
 	lightColorFadeTime = 0.1f;
+	lightUpdateTime = 0.0f;
 
 	isInteracting = false;
 	canSpend = false;
@@ -103,7 +105,7 @@ APlayerCharacter::APlayerCharacter() {
 	LifeLight->bUseInverseSquaredFalloff = false;
 	LifeLight->Intensity = 50.0f;
 	LifeLight->bUseTemperature = true;
-
+	
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -617,6 +619,8 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 	switch (CurrentLightUpdateState) {
 	case ELightUpdateState::UpdateStart:
 		if (lightEnergy == characterEnergy) { CurrentLightUpdateState = ELightUpdateState::UpdateEnd; break; }
+
+		lightColorOffset = LifeLight->Temperature * lightColorOffsetFac;
 		
 		if (lightEnergy > characterEnergy) {
 			CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeIn;
@@ -628,6 +632,8 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 	case ELightUpdateState::UpdateDecFadeIn:
 		lightEnergy -= (initialLightEnergy - characterEnergy) / lifeLightDecTime * deltaTime;
 		lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
+
+		LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
 
 		if (lightColorFade <= -lightColorOffset) lightColorFade = -lightColorOffset;
 
@@ -643,7 +649,10 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 		lightEnergy = characterEnergy;
 		lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
 
+		LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
+
 		if (lightColorFade >= 0.0f) {
+			LifeLight->Intensity = 50.0f;
 			lightColorFade = 0.0f;
 			CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
 		} break;
@@ -656,6 +665,7 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 			CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
 		} break;
 	case ELightUpdateState::UpdateEnd:
+		lightUpdateTime = 0.0f;
 		lifeLightNeedsUpdate = false;
 		this->InitLight(); break;
 	}
@@ -669,6 +679,8 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 		LifeLight->UpdateComponentToWorld();
 
 		GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+		
+		lightUpdateTime += deltaTime;
 	}
 }
 
