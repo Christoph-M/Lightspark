@@ -14,9 +14,10 @@ class LIGHTSPARK_API AEnvLightInteractablePlant : public AEnvLightInteractable
 public:
 	AEnvLightInteractablePlant();
 
-	virtual void BeginPlay() override;
 
-protected:
-	UFUNCTION()
-	void ResetState(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+
+	virtual void CheckForCharacters() override;
 };

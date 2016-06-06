@@ -20,6 +20,17 @@ enum class EMovementState {
 };
 
 UENUM(BlueprintType)
+enum class ELightUpdateState {
+	NoUpdate,
+	UpdateStart,
+	UpdateDecFadeIn,
+	UpdateDecFadeOut,
+	UpdateIncFadeIn,
+	UpdateIncFadeOut,
+	UpdateEnd
+};
+
+UENUM(BlueprintType)
 enum ESprintEmpowerments {
 	SEmp_FasterSprint,
 	SEmp_SprintReducedCost,
@@ -69,10 +80,20 @@ public:
 
 	FORCEINLINE class UPointLightComponent* GetLifeLight() const { return LifeLight; }
 
+	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
+
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
+	UFUNCTION(BlueprintPure, Category = "Light")
+	ELightUpdateState GetCurrentLightUpdateState() { return CurrentLightUpdateState; }
+
 	void SetCurrentMovementState(EMovementState NewState) { CurrentMovementState = NewState; }
+
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
+	UFUNCTION(BlueprintPure, Category = "Empowerment")
+	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
 	virtual void Jump() override;
@@ -81,11 +102,6 @@ public:
 	virtual void StopJumping() override;
 
 protected:
-	UFUNCTION(BlueprintPure, Category = "Empowerment")
-	bool GetSprintEmpowermentActive(int i) { return SprintEmpowermentActive[i]; }
-	UFUNCTION(BlueprintPure, Category = "Empowerment")
-	bool GetJumpEmpowermentActive(int i) { return JumpEmpowermentActive[i]; }
-
 	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }
 	void SetJumpEmpowermentActive(int i, bool active) { JumpEmpowermentActive[i] = active; }
 
@@ -133,7 +149,7 @@ protected:
 
 	void Jumping(float deltaTime);
 
-	void DoubleJump();
+	void DoubleJump(float deltaTime);
 
 	void Glide(float deltaTime);
 
@@ -141,9 +157,9 @@ protected:
 
 	void Dash();
 
-	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
+	void DisableDash();
 
-	void ChangeJumpHeight();
+	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
 	void UseEnergy(float amount);
 
@@ -161,7 +177,11 @@ private:
 	UFUNCTION()
 	void JumpLanded(const FHitResult& Hit);
 
-	void UpdateLight();
+	void InitLight();
+
+	void ActivateLightUpdate();
+
+	void UpdateLight(float deltaTime);
 
 	void DisplayCurrentStates();
 
@@ -224,6 +244,38 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float maxLightTemp;
+
+	/**
+	* Interaction Radius Factor (float)
+	* Factor that determines the interaction radius based on Light Attenuation Radius
+	* (<1.0 = smaller than attenuation radius; >1.0 bigger than attenuation radius)
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true", ClampMin = "0.0"))
+	float interactionRadiusFac;
+
+	/**
+	* Life Light Decrement Time (float)
+	* The time (in seconds) it takes the life light to decrease to current character energy
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float lifeLightDecTime;
+
+	/**
+	* Light Color Offset Factor (float)
+	* Color fade amount (in percent) when character energy changes
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true", ClampMin = "0.0", ClampMax = "1.0"))
+	float lightColorOffsetFac;
+
+	/**
+	* Light Color Fade Time (float)
+	* The time (in seconds) it takes to fade the light color to lightColorOffset
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float lightColorFadeTime;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	UCurveFloat* FlickerCurve;
 
 
 	/**
@@ -298,6 +350,13 @@ protected:
 	float decelerationFactor;
 
 	/**
+	* Dash Speed (float)
+	* How fast the character dashes forward
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
+	float dashSpeed;
+
+	/**
 	* Dash Enabled Time (float)
 	* For how long the dash ability is active after sprint button has been released
 	*/
@@ -326,8 +385,25 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
 	float lightTempFactor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightEnergy;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	bool lifeLightNeedsUpdate;
+
+	/**
+	* Light Color Offset (float)
+	* Color fade amount when character energy changes
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightColorOffset;
+
+	float lightUpdateTime;
+
 
 	EMovementState CurrentMovementState;
+
+	ELightUpdateState CurrentLightUpdateState;
 
 	/**
 	* Sprint Empowerment Active (TArray<bool>)
@@ -401,6 +477,13 @@ private:
 	bool isSprinting;
 
 	/**
+	* Can Dash (bool)
+	* Can the character currently perform a dash
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
+	bool canDash;
+
+	/**
 	* Sprint Key Hold Time (float)
 	* How long the sprint key has been held
 	*/
@@ -423,13 +506,13 @@ private:
 
 	float* maxWalkSpeed;
 
+	float lightColorFade, initialLightEnergy;
+
 	FTimerHandle DashTimerHandle, DisplayTimerHandle;
 
 	FVector measureStart, measureEnd;
 
 	bool isInteracting, canSpend, canConsume;
-
-	float baseJumpHeight;
 
 	class AActor* interactedActor;
 };

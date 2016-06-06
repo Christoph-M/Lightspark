@@ -10,7 +10,7 @@
 ALightInteractable::ALightInteractable()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	CurrentState = EInteractionState::Default;
 
@@ -79,9 +79,7 @@ void ALightInteractable::StateChangeUnknown_Implementation() {
 }
 
 void ALightInteractable::ActivateTriggerActor() {
-	ATriggeredActor* const _TriggeredActor = Cast<ATriggeredActor>(TriggeredActor);
-
-	if (_TriggeredActor && !_TriggeredActor->IsPendingKill()) {
+	if (TriggeredActor && !TriggeredActor->IsPendingKill()) {
 		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
 	} else {
 		UE_LOG(LogClass, Warning, TEXT("Triggered Actor is not set or pending kill."));
@@ -89,9 +87,7 @@ void ALightInteractable::ActivateTriggerActor() {
 }
 
 void ALightInteractable::ActivateTriggerCharacter() {
-	ALightsparkCharacter* const _TriggeredCharacter = Cast<ALightsparkCharacter>(TriggeredCharacter);
-
-	if (_TriggeredCharacter && !_TriggeredCharacter->IsPendingKill()) {
+	if (TriggeredCharacter && !TriggeredCharacter->IsPendingKill()) {
 		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
 	} else {
 		UE_LOG(LogClass, Warning, TEXT("Triggered Character is not set or pending kill."));
