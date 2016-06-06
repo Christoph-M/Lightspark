@@ -7,10 +7,12 @@
 
 
 AEnvLightInteractable::AEnvLightInteractable() {
-	
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void AEnvLightInteractable::BeginPlay() {
+	Super::BeginPlay();
+
 	this->CheckForCharacters();
 
 	if (!GetMesh()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
@@ -24,6 +26,10 @@ void AEnvLightInteractable::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void AEnvLightInteractable::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
 }
 
 void AEnvLightInteractable::CheckForCharacters() {
@@ -51,6 +57,8 @@ void AEnvLightInteractable::CheckForCharacters() {
 		}
 	}
 
+	if (!Player && !Enemy) { this->ChangeState(EInteractionState::Default); return; }
+
 	if (Player && !Player->IsPendingKill()) {
 		if (Enemy && !Enemy->IsPendingKill()) {
 			if (Player->GetCurrentCharacterEnergy() > Enemy->GetCurrentCharacterEnergy()) {
@@ -67,7 +75,5 @@ void AEnvLightInteractable::CheckForCharacters() {
 }
 
 void AEnvLightInteractable::UpdateState(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-	ChangeState(EInteractionState::Default);
-	
 	this->CheckForCharacters();
 }

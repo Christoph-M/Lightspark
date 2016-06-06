@@ -19,11 +19,11 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 
-	UPlayerSave* PlayerLoadInstance = this->LoadGame();
+	/*UPlayerSave* PlayerLoadInstance = this->LoadGame();
 
 	if (PlayerLoadInstance) {
 		UGameplayStatics::OpenLevel(this, PlayerLoadInstance->LevelName);
-	}
+	}*/
 
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }

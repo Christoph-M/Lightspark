@@ -246,6 +246,14 @@ protected:
 	float maxLightTemp;
 
 	/**
+	* Interaction Radius Factor (float)
+	* Factor that determines the interaction radius based on Light Attenuation Radius
+	* (<1.0 = smaller than attenuation radius; >1.0 bigger than attenuation radius)
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true", ClampMin = "0.0"))
+	float interactionRadiusFac;
+
+	/**
 	* Life Light Decrement Time (float)
 	* The time (in seconds) it takes the life light to decrease to current character energy
 	*/

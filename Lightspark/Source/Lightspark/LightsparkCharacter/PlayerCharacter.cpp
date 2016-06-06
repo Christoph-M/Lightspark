@@ -67,6 +67,7 @@ APlayerCharacter::APlayerCharacter() {
 	maxLightRange = 2000.0f;
 	minLightTemp = 1000.0f;
 	maxLightTemp = 12000.0f;
+	interactionRadiusFac = 1.0f;
 	lifeLightDecTime = 1.0f;
 	lifeLightNeedsUpdate = false;
 	lightColorFade = 0.0f;
@@ -111,6 +112,8 @@ APlayerCharacter::APlayerCharacter() {
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	CharacterMovement = GetCharacterMovement();
+
 	UPlayerSave* PlayerLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
 	
 	if (PlayerLoadInstance) {
@@ -127,13 +130,14 @@ void APlayerCharacter::BeginPlay() {
 		for (int i = 0; i < 4; ++i) {
 			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->SprintEmpowermentActive[i]);
 			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->JumpEmpowermentActive[i]);
+
+			if (i == SEmp_FasterSprint && this->GetSprintEmpowermentActive(SEmp_FasterSprint)) maxSprintSpeed = ((fasterSprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
+			if (i == JEmp_HigherJump && this->GetJumpEmpowermentActive(JEmp_HigherJump)) CharacterMovement->JumpZVelocity += addedJumpHeight;
 		}
 	} else {
 		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
 	}
-
-	CharacterMovement = GetCharacterMovement();
 	
 	lightEnergy = characterEnergy;
 
@@ -188,7 +192,7 @@ void APlayerCharacter::InitLight() {
 	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
 	LifeLight->UpdateColorAndBrightness();
 
-	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -678,7 +682,7 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 		LifeLight->UpdateColorAndBrightness();
 		LifeLight->UpdateComponentToWorld();
 
-		GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+		GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
 		
 		lightUpdateTime += deltaTime;
 	}
