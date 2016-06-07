@@ -8,7 +8,7 @@
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
-#include "PlayerSave.h"
+#include "LightsparkSaveGame.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -114,22 +114,22 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement = GetCharacterMovement();
 
-	UPlayerSave* PlayerLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
+	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
 	
 	if (PlayerLoadInstance) {
-		SetActorLocation(PlayerLoadInstance->CharacterLocation);
-		SetActorRotation(PlayerLoadInstance->CharacterRotation);
+		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);
+		SetActorRotation(PlayerLoadInstance->Player.CharacterRotation);
 
-		CameraBoom->SetRelativeRotation(PlayerLoadInstance->CameraBoomRotation);
-		FollowCamera->SetRelativeLocation(PlayerLoadInstance->CameraLocation);
-		FollowCamera->SetRelativeRotation(PlayerLoadInstance->CameraRotation);
+		CameraBoom->SetRelativeRotation(PlayerLoadInstance->Player.CameraBoomRotation);
+		FollowCamera->SetRelativeLocation(PlayerLoadInstance->Player.CameraLocation);
+		FollowCamera->SetRelativeRotation(PlayerLoadInstance->Player.CameraRotation);
 
-		currentMaxEnergy = PlayerLoadInstance->currentMaxEnergy;
-		characterEnergy = PlayerLoadInstance->characterEnergy;
+		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
+		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
 
 		for (int i = 0; i < 4; ++i) {
-			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->SprintEmpowermentActive[i]);
-			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->JumpEmpowermentActive[i]);
+			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
+			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->Player.JumpEmpowermentActive[i]);
 
 			if (i == SEmp_FasterSprint && this->GetSprintEmpowermentActive(SEmp_FasterSprint)) maxSprintSpeed = ((fasterSprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 			if (i == JEmp_HigherJump && this->GetJumpEmpowermentActive(JEmp_HigherJump)) CharacterMovement->JumpZVelocity += addedJumpHeight;

@@ -10,5 +10,5 @@ AFriendlyAiCharacter::AFriendlyAiCharacter() {
 }
 
 void AFriendlyAiCharacter::Merge_Implementation() {
-	this->Destroy();
+	this->Disable();
 }

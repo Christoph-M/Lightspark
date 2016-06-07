@@ -1,10 +1,14 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 
 #include "Lightspark.h"
+#include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 #include "LightsparkGameMode.h"
 #include "LightsparkCharacter/LightsparkCharacter.h"
 #include "LightsparkCharacter/PlayerCharacter.h"
-#include "PlayerSave.h"
+#include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
+#include "NPCIndexList.h"
+#include "LightsparkSaveGame.h"
 
 ALightsparkGameMode::ALightsparkGameMode()
 {
@@ -25,6 +29,45 @@ void ALightsparkGameMode::BeginPlay() {
 		UGameplayStatics::OpenLevel(this, PlayerLoadInstance->LevelName);
 	}*/
 
+	UNPCIndexList* NPCIndexListInstance = Cast<UNPCIndexList>(UGameplayStatics::CreateSaveGameObject(UNPCIndexList::StaticClass()));
+
+	int i = 0;
+
+	for (TActorIterator<AFriendlyAiCharacter> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		AFriendlyAiCharacter* NPC = *ActorItr;
+
+		NPCIndexListInstance->IndexList.Add(FIndexList());
+		NPCIndexListInstance->IndexList[i].id = FRIENDLY_AI + i;
+		NPCIndexListInstance->IndexList[i].NPCPosition = NPC->GetActorLocation();
+
+		++i;
+	}
+
+	UE_LOG(LogClass, Log, TEXT("NPCIndexList count: %d"), NPCIndexListInstance->IndexList.Num());
+
+	UGameplayStatics::SaveGameToSlot(NPCIndexListInstance, NPCIndexListInstance->SaveSlotName, NPCIndexListInstance->UserIndex);
+
+
+	ULightsparkSaveGame* NPCLoadInstance = ALightsparkGameMode::LoadGame();
+
+	for (TActorIterator<AFriendlyAiCharacter> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		AFriendlyAiCharacter* NPC = *ActorItr;
+
+		NPC->SetID();
+
+		if (NPCLoadInstance) {
+			for (FNPCSaveData Entry : NPCLoadInstance->NPCs) {
+				if (Entry.id == NPC->GetID()) {
+					NPC->SetActorLocation(Entry.NPCLocation);
+					NPC->SetActorRotation(Entry.NPCRotation);
+
+					if (Entry.destroyed) NPC->Disable();
+				}
+			}
+		}
+	}
+
+
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }
 
@@ -39,12 +82,13 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 	}
 }
 
-void ALightsparkGameMode::SaveGame(FString const &slotName, uint32 const userIndex) {
+void ALightsparkGameMode::SaveGame(FString const &slotName) {
+	ULightsparkSaveGame* LightpsarkSaveInstance = Cast<ULightsparkSaveGame>(UGameplayStatics::CreateSaveGameObject(ULightsparkSaveGame::StaticClass()));
+
 	APlayerCharacter* MyCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
-	UPlayerSave* PlayerSaveInstance = Cast<UPlayerSave>(UGameplayStatics::CreateSaveGameObject(UPlayerSave::StaticClass()));
-	PlayerSaveInstance->SaveSlotName = slotName;
-	PlayerSaveInstance->UserIndex = userIndex;
+	LightpsarkSaveInstance->SaveSlotName = slotName;
+	LightpsarkSaveInstance->UserIndex = 0;
 
 
 	FStringAssetReference levelPath = FStringAssetReference(GetWorld()->GetCurrentLevel());
@@ -55,35 +99,55 @@ void ALightsparkGameMode::SaveGame(FString const &slotName, uint32 const userInd
 	str.ReplaceInline(TEXT("/Game/Maps/"), TEXT(""));
 	str.ReplaceInline(TEXT(":PersistentLevel"), TEXT(""));
 
-	PlayerSaveInstance->LevelName = FName(*str);
-	UE_LOG(LogClass, Log, TEXT("Level Path: %s"), *PlayerSaveInstance->LevelName.ToString());
+	LightpsarkSaveInstance->LevelName = FName(*str);
+	UE_LOG(LogClass, Log, TEXT("Level Path: %s"), *LightpsarkSaveInstance->LevelName.ToString());
 
 
-	PlayerSaveInstance->CharacterLocation = MyCharacter->GetActorLocation();
-	PlayerSaveInstance->CharacterRotation = MyCharacter->GetActorRotation();
+	LightpsarkSaveInstance->Player.CharacterLocation = MyCharacter->GetActorLocation();
+	LightpsarkSaveInstance->Player.CharacterRotation = MyCharacter->GetActorRotation();
 
-	PlayerSaveInstance->CameraBoomRotation = MyCharacter->GetCameraBoom()->RelativeRotation;
-	PlayerSaveInstance->CameraLocation = MyCharacter->GetFollowCamera()->RelativeLocation;
-	PlayerSaveInstance->CameraRotation = MyCharacter->GetFollowCamera()->RelativeRotation;
+	LightpsarkSaveInstance->Player.CameraBoomRotation = MyCharacter->GetCameraBoom()->RelativeRotation;
+	LightpsarkSaveInstance->Player.CameraLocation = MyCharacter->GetFollowCamera()->RelativeLocation;
+	LightpsarkSaveInstance->Player.CameraRotation = MyCharacter->GetFollowCamera()->RelativeRotation;
 
-	PlayerSaveInstance->currentMaxEnergy = MyCharacter->GetCurrentMaxEnergy();
-	PlayerSaveInstance->characterEnergy = MyCharacter->GetCurrentCharacterEnergy();
+	LightpsarkSaveInstance->Player.currentMaxEnergy = MyCharacter->GetCurrentMaxEnergy();
+	LightpsarkSaveInstance->Player.characterEnergy = MyCharacter->GetCurrentCharacterEnergy();
 
 	for (int i = 0; i < 4; ++i) {
-		PlayerSaveInstance->SprintEmpowermentActive.Add(MyCharacter->GetSprintEmpowermentActive(i));
-		PlayerSaveInstance->JumpEmpowermentActive.Add(MyCharacter->GetJumpEmpowermentActive(i));
+		LightpsarkSaveInstance->Player.SprintEmpowermentActive.Add(MyCharacter->GetSprintEmpowermentActive(i));
+		LightpsarkSaveInstance->Player.JumpEmpowermentActive.Add(MyCharacter->GetJumpEmpowermentActive(i));
 	}
 
-	UGameplayStatics::SaveGameToSlot(PlayerSaveInstance, PlayerSaveInstance->SaveSlotName, PlayerSaveInstance->UserIndex);
+
+	UNPCIndexList* NPCIndexListInstance = this->LoadIndexList();
+
+	int i = 0;
+
+	for (TActorIterator<AFriendlyAiCharacter> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		AFriendlyAiCharacter* NPC = *ActorItr;
+
+		LightpsarkSaveInstance->NPCs.Add(FNPCSaveData());
+		LightpsarkSaveInstance->NPCs[i].id = NPC->GetID();
+		LightpsarkSaveInstance->NPCs[i].NPCLocation = NPC->GetActorLocation();
+		LightpsarkSaveInstance->NPCs[i].NPCRotation = NPC->GetActorRotation();
+
+		if (NPC->IsEnabled()) {
+			LightpsarkSaveInstance->NPCs[i].destroyed = false;
+		} else {
+			LightpsarkSaveInstance->NPCs[i].destroyed = true;
+		}
+
+		++i;
+	}
+
+
+	UGameplayStatics::SaveGameToSlot(LightpsarkSaveInstance, LightpsarkSaveInstance->SaveSlotName, LightpsarkSaveInstance->UserIndex);
 }
 
-UPlayerSave* ALightsparkGameMode::LoadGame(FString const &slotName, uint32 const userIndex) {
-	UPlayerSave* PlayerLoadInstance = Cast<UPlayerSave>(UGameplayStatics::CreateSaveGameObject(UPlayerSave::StaticClass()));
-	PlayerLoadInstance = Cast<UPlayerSave>(UGameplayStatics::LoadGameFromSlot(slotName, userIndex));
+UNPCIndexList* ALightsparkGameMode::LoadIndexList() {
+	return Cast<UNPCIndexList>(UGameplayStatics::LoadGameFromSlot(TEXT("NPCIndexList"), 0));
+}
 
-	if (PlayerLoadInstance) {
-		return PlayerLoadInstance;
-	} else {
-		return nullptr;
-	}
+ULightsparkSaveGame* ALightsparkGameMode::LoadGame(FString const &slotName) {
+	return Cast<ULightsparkSaveGame>(UGameplayStatics::LoadGameFromSlot(slotName, 0));
 }
