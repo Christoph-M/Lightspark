@@ -13,4 +13,16 @@ class LIGHTSPARK_API AEnvLightInteractable : public ALightInteractable
 	
 public:
 	AEnvLightInteractable();
+
+
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaTime) override;
+
+
+	virtual void CheckForCharacters();
+
+protected:
+	UFUNCTION()
+	void UpdateState(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

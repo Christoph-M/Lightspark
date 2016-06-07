@@ -50,21 +50,21 @@ void APlayerLightInteractableFlower::StateChangeUnknown_Implementation() {
 void APlayerLightInteractableFlower::ActivateTriggerActor() {
 	Super::ActivateTriggerActor();
 
-	ATriggeredActor* const _TriggeredActor = Cast<ATriggeredActor>(this->GetTriggeredActor());
+	ATriggeredActor* const TriggeredActor = this->GetTriggeredActor();
 
-	if (_TriggeredActor && !_TriggeredActor->IsPendingKill()) {
-		_TriggeredActor->SetActorHiddenInGame(true);
-		_TriggeredActor->SetActorTickEnabled(false);
-		_TriggeredActor->SetActorEnableCollision(false);
+	if (TriggeredActor && !TriggeredActor->IsPendingKill()) {
+		TriggeredActor->SetActorHiddenInGame(true);
+		TriggeredActor->SetActorTickEnabled(false);
+		TriggeredActor->SetActorEnableCollision(false);
 	}
 }
 
 void APlayerLightInteractableFlower::ActivateTriggerCharacter() {
 	Super::ActivateTriggerCharacter();
 
-	ALightsparkCharacter* const _TriggeredCharacter = Cast<ALightsparkCharacter>(this->GetTriggeredCharacter());
+	ALightsparkCharacter* const TriggeredCharacter = this->GetTriggeredCharacter();
 
-	if (_TriggeredCharacter && !_TriggeredCharacter->IsPendingKill()) {
+	if (TriggeredCharacter && !TriggeredCharacter->IsPendingKill()) {
 		// Lure enemy.
 	}
 }
