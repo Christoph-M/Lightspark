@@ -2,9 +2,6 @@
 
 #include "Lightspark.h"
 #include "AiCharacter.h"
-#include "LightsparkGameMode.h"
-#include "NPCIndexList.h"
-#include "LightsparkSaveGame.h"
 
 
 // Sets default values
@@ -38,22 +35,6 @@ void AAiCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompone
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
-}
-
-void AAiCharacter::SetID() {
-	UNPCIndexList* NPCIndexListInstance = ALightsparkGameMode::LoadIndexList();
-
-	if (NPCIndexListInstance) {
-		for (FIndexList Entry : NPCIndexListInstance->IndexList) {
-			if (this->GetActorLocation() == Entry.NPCPosition) {
-				id = Entry.id;
-			}
-		}
-	} else {
-		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
-	}
-	
-	UE_LOG(LogClass, Log, TEXT("NPC ID: %d"), id);
 }
 
 void AAiCharacter::Disable() {

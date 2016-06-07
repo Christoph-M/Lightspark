@@ -51,13 +51,28 @@ struct FNPCSaveData {
 	uint32 id;
 
 	UPROPERTY()
-	FVector NPCLocation;
+	FVector ActorLocation;
 
 	UPROPERTY()
-	FRotator NPCRotation;
+	FRotator ActorRotation;
 
 	UPROPERTY()
 	bool destroyed;
+};
+
+USTRUCT()
+struct FActorSaveData {
+	GENERATED_BODY()
+
+
+	UPROPERTY()
+	uint32 id;
+
+	UPROPERTY()
+	FVector ActorLocation;
+
+	UPROPERTY()
+	FRotator ActorRotation;
 };
 
 
@@ -87,4 +102,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "NPCs")
 	TArray<FNPCSaveData> NPCs;
+
+	UPROPERTY(VisibleAnywhere, Category = "NPCs")
+	TArray<FNPCSaveData> Enemies;
+
+	UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<FActorSaveData> PlayerInteractables;
+
+	UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<FActorSaveData> TriggeredActors;
 };

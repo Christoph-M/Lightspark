@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Lightspark.h"
-#include "NPCIndexList.h"
+#include "IndexList.h"
 
 
-UNPCIndexList::UNPCIndexList() {
-	SaveSlotName = TEXT("NPCIndexList");
+UIndexList::UIndexList() {
+	SaveSlotName = TEXT("IndexList");
 	UserIndex = 0;
 }

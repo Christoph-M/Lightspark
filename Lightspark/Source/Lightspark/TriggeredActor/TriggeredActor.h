@@ -24,10 +24,15 @@ public:
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return Mesh; }
 
 
+	uint32 GetID() { return id; }
+	void SetID();
+
 	virtual void Trigger(class AActor* otherActor);
 
 	
 private:
+	uint32 id;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* Mesh;
 };

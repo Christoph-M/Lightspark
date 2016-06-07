@@ -2,6 +2,8 @@
 
 #include "Lightspark.h"
 #include "TriggeredActor.h"
+#include "LightsparkGameMode.h"
+#include "IndexList.h"
 
 
 // Sets default values
@@ -30,4 +32,20 @@ void ATriggeredActor::Tick( float DeltaTime )
 
 void ATriggeredActor::Trigger(class AActor* otherActor) {
 	UE_LOG(LogClass, Log, TEXT("Triggering actor: %s"), *otherActor->GetName());
+}
+
+void ATriggeredActor::SetID() {
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+
+	if (IndexListInstance) {
+		for (FIndexListData Entry : IndexListInstance->TriggeredActorIndexList) {
+			if (this->GetActorLocation() == Entry.ActorLocation) {
+				id = Entry.id;
+			}
+		}
+	} else {
+		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+	}
+
+	UE_LOG(LogClass, Log, TEXT("TriggeredActor ID: %d"), id);
 }

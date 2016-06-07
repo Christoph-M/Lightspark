@@ -24,15 +24,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	uint32 GetID() { return id; }
-	void SetID();
 
 	bool IsEnabled() { return isEnabled; }
 
 	void Disable();
 
 protected:
-	bool isEnabled;
-
-private:
 	uint32 id;
+
+	bool isEnabled;
 };
