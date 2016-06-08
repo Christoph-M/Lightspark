@@ -170,6 +170,36 @@ protected:
 	UFUNCTION()
 	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;
 
+	UFUNCTION()
+	void TeleportToCheckpoint0();
+
+	UFUNCTION()
+		void TeleportToCheckpoint1();
+
+	UFUNCTION()
+		void TeleportToCheckpoint2();
+
+	UFUNCTION()
+		void TeleportToCheckpoint3();
+
+	UFUNCTION()
+		void TeleportToCheckpoint4();
+
+	UFUNCTION()
+		void TeleportToCheckpoint5();
+
+	UFUNCTION()
+		void TeleportToCheckpoint6();
+
+	UFUNCTION()
+		void TeleportToCheckpoint7();
+
+	UFUNCTION()
+		void TeleportToCheckpoint8();
+
+	UFUNCTION()
+		void TeleportToCheckpoint9();
+
 private:
 	UFUNCTION()
 	void JumpApex();
@@ -362,6 +392,9 @@ protected:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float dashEnabledTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
+	TArray<class AActor*> Checkpoints;
 
 private:
 	/**
