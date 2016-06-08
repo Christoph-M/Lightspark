@@ -16,5 +16,5 @@ class LIGHTSPARK_API ATriggeredActorBlockade : public ATriggeredActor
 public:
 	ATriggeredActorBlockade();
 	
-	
+	virtual void Trigger(class AActor* OtherActor) override;
 };

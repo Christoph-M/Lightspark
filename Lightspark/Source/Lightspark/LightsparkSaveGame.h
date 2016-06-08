@@ -73,6 +73,12 @@ struct FActorSaveData {
 
 	UPROPERTY()
 	FRotator ActorRotation;
+
+	UPROPERTY()
+	uint8 interactionState;
+
+	/*UPROPERTY()
+	bool hasBeenTriggered;*/
 };
 
 
@@ -109,6 +115,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Actors")
 	TArray<FActorSaveData> PlayerInteractables;
 
-	UPROPERTY(VisibleAnywhere, Category = "Actors")
-	TArray<FActorSaveData> TriggeredActors;
+	/*UPROPERTY(VisibleAnywhere, Category = "Actors")
+	TArray<FActorSaveData> TriggeredActors;*/
 };

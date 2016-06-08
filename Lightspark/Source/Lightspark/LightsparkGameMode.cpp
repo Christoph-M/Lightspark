@@ -85,8 +85,32 @@ void ALightsparkGameMode::LoadActors() {
 	this->LoadNPCsT<AFriendlyAiCharacter>(ActorLoadInstance->NPCs, ActorLoadInstance);
 	this->LoadNPCsT<AEnemyAiCharacter>(ActorLoadInstance->Enemies, ActorLoadInstance);
 
-	this->LoadActorsT<APlayerLightInteractable>(ActorLoadInstance->PlayerInteractables, ActorLoadInstance);
-	this->LoadActorsT<ATriggeredActor>(ActorLoadInstance->TriggeredActors, ActorLoadInstance);
+	/*this->LoadActorsT<APlayerLightInteractable>(ActorLoadInstance->PlayerInteractables, ActorLoadInstance);
+	this->LoadActorsT<ATriggeredActor>(ActorLoadInstance->TriggeredActors, ActorLoadInstance);*/
+
+	for (TActorIterator<APlayerLightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		APlayerLightInteractable* Actor = *ActorItr;
+
+		Actor->SetID();
+
+
+		if (ActorLoadInstance) {
+			for (FActorSaveData Entry : ActorLoadInstance->PlayerInteractables) {
+				if (Entry.id == Actor->GetID()) {
+					Actor->SetActorLocation(Entry.ActorLocation);
+					Actor->SetActorRotation(Entry.ActorRotation);
+
+					switch (Entry.interactionState) {
+						case 0: Actor->ChangeState(EInteractionState::Default); break;
+						case 1: Actor->ChangeState(EInteractionState::Lit); break;
+						case 2: Actor->ChangeState(EInteractionState::Unlit); break;
+						case 3: Actor->ChangeState(EInteractionState::Destroyed); break;
+						case 4: Actor->ChangeState(EInteractionState::Unknown); break;
+					}
+				}
+			}
+		}
+	}
 }
 
 template <typename ActorType>
@@ -168,8 +192,29 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		this->SaveNPCs<AFriendlyAiCharacter>(LightpsarkSaveInstance->NPCs);
 		this->SaveNPCs<AEnemyAiCharacter>(LightpsarkSaveInstance->Enemies);
 
-		this->SaveActors<APlayerLightInteractable>(LightpsarkSaveInstance->PlayerInteractables);
-		this->SaveActors<ATriggeredActor>(LightpsarkSaveInstance->TriggeredActors);
+		/*this->SaveActors<APlayerLightInteractable>(LightpsarkSaveInstance->PlayerInteractables, PLAYER_INTERACTABLE);
+		this->SaveActors<ATriggeredActor>(LightpsarkSaveInstance->TriggeredActors, TRIGGERED_ACTOR);*/
+
+		int i = 0;
+
+		for (TActorIterator<APlayerLightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			APlayerLightInteractable* Actor = *ActorItr;
+
+			LightpsarkSaveInstance->PlayerInteractables.Add(FActorSaveData());
+			LightpsarkSaveInstance->PlayerInteractables[i].id = Actor->GetID();
+			LightpsarkSaveInstance->PlayerInteractables[i].ActorLocation = Actor->GetActorLocation();
+			LightpsarkSaveInstance->PlayerInteractables[i].ActorRotation = Actor->GetActorRotation();
+			
+			switch (Actor->GetCurrentState()) {
+				case EInteractionState::Default: LightpsarkSaveInstance->PlayerInteractables[i].interactionState = 0; break;
+				case EInteractionState::Lit: LightpsarkSaveInstance->PlayerInteractables[i].interactionState = 1; break;
+				case EInteractionState::Unlit: LightpsarkSaveInstance->PlayerInteractables[i].interactionState = 2; break;
+				case EInteractionState::Destroyed: LightpsarkSaveInstance->PlayerInteractables[i].interactionState = 3; break;
+				case EInteractionState::Unknown: LightpsarkSaveInstance->PlayerInteractables[i].interactionState = 4; break;
+			}
+
+			++i;
+		}
 
 	UGameplayStatics::SaveGameToSlot(LightpsarkSaveInstance, LightpsarkSaveInstance->SaveSlotName, LightpsarkSaveInstance->UserIndex);
 }
@@ -197,7 +242,7 @@ void ALightsparkGameMode::SaveNPCs(TArray<FNPCSaveData> &SaveDataList) {
 }
 
 template <typename ActorType>
-void ALightsparkGameMode::SaveActors(TArray<FActorSaveData> &SaveDataList) {
+void ALightsparkGameMode::SaveActors(TArray<FActorSaveData> &SaveDataList, uint32 type) {
 	int i = 0;
 
 	for (TActorIterator<ActorType> ActorItr(GetWorld()); ActorItr; ++ActorItr) {

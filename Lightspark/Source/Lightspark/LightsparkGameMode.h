@@ -49,7 +49,7 @@ private:
 	FORCEINLINE void SaveNPCs(TArray<struct FNPCSaveData> &SaveDataList);
 
 	template <typename ActorType>
-	FORCEINLINE void SaveActors(TArray<struct FActorSaveData> &SaveDataList);
+	FORCEINLINE void SaveActors(TArray<struct FActorSaveData> &SaveDataList, uint32 type);
 
 	void LoadActors();
 

@@ -12,6 +12,8 @@ ATriggeredActor::ATriggeredActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	hasBeenTriggered = false;
+
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	RootComponent = Mesh;
 }
@@ -30,8 +32,9 @@ void ATriggeredActor::Tick( float DeltaTime )
 
 }
 
-void ATriggeredActor::Trigger(class AActor* otherActor) {
-	UE_LOG(LogClass, Log, TEXT("Triggering actor: %s"), *otherActor->GetName());
+void ATriggeredActor::Trigger(AActor* OtherActor) {
+	hasBeenTriggered = true;
+	UE_LOG(LogClass, Log, TEXT("Triggering actor: %s"), *OtherActor->GetName());
 }
 
 void ATriggeredActor::SetID() {

@@ -27,8 +27,13 @@ public:
 	uint32 GetID() { return id; }
 	void SetID();
 
-	virtual void Trigger(class AActor* otherActor);
 
+	bool HasBeenTriggered() { return hasBeenTriggered; }
+
+	virtual void Trigger(class AActor* OtherActor);
+
+protected:
+	bool hasBeenTriggered;
 	
 private:
 	uint32 id;
