@@ -13,6 +13,7 @@
 #include "IndexList.h"
 #include "LightsparkSaveGame.h"
 
+
 ALightsparkGameMode::ALightsparkGameMode()
 {
 	// set default pawn class to our Blueprinted character
@@ -26,7 +27,7 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 
-	/*UPlayerSave* PlayerLoadInstance = this->LoadGame();
+	/*ULightsparkSaveGame* PlayerLoadInstance = this->LoadGame();
 
 	if (PlayerLoadInstance) {
 		UGameplayStatics::OpenLevel(this, PlayerLoadInstance->LevelName);
@@ -48,6 +49,8 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 	if (MyCharacter) {
 		if (MyCharacter->GetCurrentCharacterEnergy() <= 0.0f) {
 			this->SetCurrentPlayState(ELightsparkPlayState::GameOver);
+
+			MyCharacter->Destroy();
 		}
 	}
 }

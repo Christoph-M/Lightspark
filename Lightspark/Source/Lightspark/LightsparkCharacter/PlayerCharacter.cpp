@@ -532,9 +532,9 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(jumpEnergyConsume);
-	}
+	//}
 
 	jumpTime += deltaTime;
 
@@ -552,9 +552,9 @@ void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	CharacterMovement->DoJump(false);
 
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(doubleJumpEnergyConsume);
-	}
+	//}
 
 	doubleJumped = true;
 	canDoubleJump = false;
@@ -571,9 +571,9 @@ void APlayerCharacter::Glide(float deltaTime) {
 }
 
 void APlayerCharacter::Sprint(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(sprintEnergyConsume * deltaTime);
-	}
+	//}
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
