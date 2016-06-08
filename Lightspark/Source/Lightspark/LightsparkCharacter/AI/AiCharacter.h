@@ -22,4 +22,15 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+
+	uint32 GetID() { return id; }
+
+	bool IsEnabled() { return isEnabled; }
+
+	void Disable();
+
+protected:
+	uint32 id;
+
+	bool isEnabled;
 };

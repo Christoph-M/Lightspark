@@ -11,12 +11,15 @@ AAiCharacter::AAiCharacter()
 
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+
+	isEnabled = true;
 }
 
 // Called when the game starts or when spawned
 void AAiCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
 	
 }
 
@@ -34,3 +37,9 @@ void AAiCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompone
 
 }
 
+void AAiCharacter::Disable() {
+	this->SetActorHiddenInGame(true);
+	this->SetActorTickEnabled(false);
+	this->SetActorEnableCollision(false);
+	isEnabled = false;
+}

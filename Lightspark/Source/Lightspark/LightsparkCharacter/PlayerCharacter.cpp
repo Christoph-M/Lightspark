@@ -8,7 +8,7 @@
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
-#include "PlayerSave.h"
+#include "LightsparkSaveGame.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -114,22 +114,22 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement = GetCharacterMovement();
 
-	UPlayerSave* PlayerLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
+	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
 	
 	if (PlayerLoadInstance) {
-		SetActorLocation(PlayerLoadInstance->CharacterLocation);
-		SetActorRotation(PlayerLoadInstance->CharacterRotation);
+		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);
+		SetActorRotation(PlayerLoadInstance->Player.CharacterRotation);
 
-		CameraBoom->SetRelativeRotation(PlayerLoadInstance->CameraBoomRotation);
-		FollowCamera->SetRelativeLocation(PlayerLoadInstance->CameraLocation);
-		FollowCamera->SetRelativeRotation(PlayerLoadInstance->CameraRotation);
+		CameraBoom->SetRelativeRotation(PlayerLoadInstance->Player.CameraBoomRotation);
+		FollowCamera->SetRelativeLocation(PlayerLoadInstance->Player.CameraLocation);
+		FollowCamera->SetRelativeRotation(PlayerLoadInstance->Player.CameraRotation);
 
-		currentMaxEnergy = PlayerLoadInstance->currentMaxEnergy;
-		characterEnergy = PlayerLoadInstance->characterEnergy;
+		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
+		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
 
 		for (int i = 0; i < 4; ++i) {
-			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->SprintEmpowermentActive[i]);
-			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->JumpEmpowermentActive[i]);
+			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
+			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->Player.JumpEmpowermentActive[i]);
 
 			if (i == SEmp_FasterSprint && this->GetSprintEmpowermentActive(SEmp_FasterSprint)) maxSprintSpeed = ((fasterSprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 			if (i == JEmp_HigherJump && this->GetJumpEmpowermentActive(JEmp_HigherJump)) CharacterMovement->JumpZVelocity += addedJumpHeight;
@@ -226,6 +226,58 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	// handle touch devices
 	InputComponent->BindTouch(IE_Pressed, this, &APlayerCharacter::TouchStarted);
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
+
+
+	InputComponent->BindAction("Checkpoint_0", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint0);
+	InputComponent->BindAction("Checkpoint_1", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint1);
+	InputComponent->BindAction("Checkpoint_2", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint2);
+	InputComponent->BindAction("Checkpoint_3", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint3);
+	InputComponent->BindAction("Checkpoint_4", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint4);
+	InputComponent->BindAction("Checkpoint_5", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint5);
+	InputComponent->BindAction("Checkpoint_6", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint6);
+	InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
+	InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
+	InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
+}
+
+void APlayerCharacter::TeleportToCheckpoint0() {
+	this->SetActorLocation(Checkpoints[0]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint1() {
+	this->SetActorLocation(Checkpoints[1]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint2() {
+	this->SetActorLocation(Checkpoints[2]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint3() {
+	this->SetActorLocation(Checkpoints[3]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint4() {
+	this->SetActorLocation(Checkpoints[4]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint5() {
+	this->SetActorLocation(Checkpoints[5]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint6() {
+	this->SetActorLocation(Checkpoints[6]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint7() {
+	this->SetActorLocation(Checkpoints[7]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint8() {
+	this->SetActorLocation(Checkpoints[8]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint9() {
+	this->SetActorLocation(Checkpoints[9]->GetActorLocation());
 }
 
 
@@ -532,9 +584,9 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(jumpEnergyConsume);
-	}
+	//}
 
 	jumpTime += deltaTime;
 
@@ -552,9 +604,9 @@ void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	CharacterMovement->DoJump(false);
 
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(doubleJumpEnergyConsume);
-	}
+	//}
 
 	doubleJumped = true;
 	canDoubleJump = false;
@@ -571,9 +623,9 @@ void APlayerCharacter::Glide(float deltaTime) {
 }
 
 void APlayerCharacter::Sprint(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(sprintEnergyConsume * deltaTime);
-	}
+	//}
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
