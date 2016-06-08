@@ -4,6 +4,9 @@
 #include "EnemyAiCharacter.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "LightsparkCharacter/PlayerCharacter.h"
+#include "LightsparkGameMode.h"
+#include "IndexList.h"
+#include "LightsparkSaveGame.h"
 
 
 AEnemyAiCharacter::AEnemyAiCharacter() {
@@ -30,4 +33,20 @@ void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class
 
 		TestInteractable->CheckForCharacters();
 	}
+}
+
+void AEnemyAiCharacter::SetID() {
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+
+	if (IndexListInstance) {
+		for (FIndexListData Entry : IndexListInstance->EnemyIndexList) {
+			if (this->GetActorLocation() == Entry.ActorLocation) {
+				id = Entry.id;
+			}
+		}
+	} else {
+		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+	}
+
+	UE_LOG(LogClass, Log, TEXT("Enemy ID: %d"), id);
 }

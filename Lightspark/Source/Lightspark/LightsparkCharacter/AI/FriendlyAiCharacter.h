@@ -36,6 +36,8 @@ public:
 	ESprintEmpowerment GetSprintEmpowerment() { return SprintEmpowerment; }
 	EJumpEmpowerment GetJumpEmpowerment() { return JumpEmpowerment; }
 
+	void SetID();
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Interaction")
 	void Merge();
 	void Merge_Implementation();

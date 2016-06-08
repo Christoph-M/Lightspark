@@ -2,6 +2,9 @@
 
 #include "Lightspark.h"
 #include "FriendlyAiCharacter.h"
+#include "LightsparkGameMode.h"
+#include "IndexList.h"
+#include "LightsparkSaveGame.h"
 
 
 AFriendlyAiCharacter::AFriendlyAiCharacter() {
@@ -10,5 +13,21 @@ AFriendlyAiCharacter::AFriendlyAiCharacter() {
 }
 
 void AFriendlyAiCharacter::Merge_Implementation() {
-	this->Destroy();
+	this->Disable();
+}
+
+void AFriendlyAiCharacter::SetID() {
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+
+	if (IndexListInstance) {
+		for (FIndexListData Entry : IndexListInstance->NPCIndexList) {
+			if (this->GetActorLocation() == Entry.ActorLocation) {
+				id = Entry.id;
+			}
+		}
+	} else {
+		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+	}
+
+	UE_LOG(LogClass, Log, TEXT("NPC ID: %d"), id);
 }
