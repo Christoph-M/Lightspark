@@ -27,10 +27,11 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 	
-	this->CreateIndexLists();
+	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
+		this->CreateIndexLists();
 
-	this->LoadActors();
-
+		this->LoadActors();
+	}
 
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }
