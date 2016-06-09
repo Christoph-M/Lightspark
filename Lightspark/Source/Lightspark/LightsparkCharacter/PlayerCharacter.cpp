@@ -636,6 +636,7 @@ void APlayerCharacter::Sprint(float deltaTime) {
 }
 
 void APlayerCharacter::Dash() {
+	this->UseEnergy(3.0f);
 	CharacterMovement->Velocity *= dashSpeed;
 
 	canDash = false;
