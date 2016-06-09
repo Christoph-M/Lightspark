@@ -8,6 +8,9 @@
 
 AEnvLightInteractable::AEnvLightInteractable() {
 	PrimaryActorTick.bCanEverTick = true;
+
+	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	InteractionSphere->AttachTo(RootComponent);
 }
 
 void AEnvLightInteractable::BeginPlay() {
@@ -15,14 +18,14 @@ void AEnvLightInteractable::BeginPlay() {
 
 	this->CheckForCharacters();
 
-	if (!GetMesh()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
-		GetMesh()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
+	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
+		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 }
 
 void AEnvLightInteractable::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	if (GetMesh()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
-		GetMesh()->OnComponentEndOverlap.RemoveDynamic(this, &AEnvLightInteractable::UpdateState);
+	if (GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
+		GetSphere()->OnComponentEndOverlap.RemoveDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -34,7 +37,7 @@ void AEnvLightInteractable::Tick(float DeltaTime) {
 
 void AEnvLightInteractable::CheckForCharacters() {
 	TArray<AActor*> CollectedActors;
-	GetMesh()->GetOverlappingActors(CollectedActors);
+	GetSphere()->GetOverlappingActors(CollectedActors);
 	
 	APlayerCharacter* Player = nullptr;
 	AEnemyAiCharacter* Enemy = nullptr;

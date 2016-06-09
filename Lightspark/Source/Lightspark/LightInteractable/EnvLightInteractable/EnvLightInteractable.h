@@ -11,9 +11,14 @@ class LIGHTSPARK_API AEnvLightInteractable : public ALightInteractable
 {
 	GENERATED_BODY()
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* InteractionSphere;
+
 public:
 	AEnvLightInteractable();
 
+
+	FORCEINLINE USphereComponent* const GetSphere() { return InteractionSphere; }
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

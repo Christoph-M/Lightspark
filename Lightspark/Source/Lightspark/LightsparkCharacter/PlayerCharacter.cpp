@@ -746,7 +746,9 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 
 	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
 
-	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
+	UE_LOG(LogClass, Error, TEXT("PLAYER CompName: %s"), *OtherComp->GetName());
+
+	if (TestInteractable && !TestInteractable->IsPendingKill() && OtherComp->GetName() == TEXT("Sphere") && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
 		TestInteractable->CheckForCharacters();
