@@ -7,31 +7,43 @@
 
 
 AEnvLightInteractable::AEnvLightInteractable() {
-	
+	PrimaryActorTick.bCanEverTick = true;
+
+	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	InteractionSphere->AttachTo(RootComponent);
 }
 
 void AEnvLightInteractable::BeginPlay() {
+	Super::BeginPlay();
+
 	this->CheckForCharacters();
 
-	if (!GetMesh()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
-		GetMesh()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
+	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
+		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 }
 
 void AEnvLightInteractable::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	if (GetMesh()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
-		GetMesh()->OnComponentEndOverlap.RemoveDynamic(this, &AEnvLightInteractable::UpdateState);
+	if (GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
+		GetSphere()->OnComponentEndOverlap.RemoveDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 
 	Super::EndPlay(EndPlayReason);
 }
 
+void AEnvLightInteractable::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+}
+
 void AEnvLightInteractable::CheckForCharacters() {
 	TArray<AActor*> CollectedActors;
-	GetMesh()->GetOverlappingActors(CollectedActors);
+	GetSphere()->GetOverlappingActors(CollectedActors);
 	
 	APlayerCharacter* Player = nullptr;
 	AEnemyAiCharacter* Enemy = nullptr;
+
+	int playerEnergy = -1;
+	int enemyEnergy  = -1;
 
 	for (int i = 0; i < CollectedActors.Num(); ++i) {
 		APlayerCharacter* const TestPlayer = Cast<APlayerCharacter>(CollectedActors[i]);
@@ -51,23 +63,18 @@ void AEnvLightInteractable::CheckForCharacters() {
 		}
 	}
 
-	if (Player && !Player->IsPendingKill()) {
-		if (Enemy && !Enemy->IsPendingKill()) {
-			if (Player->GetCurrentCharacterEnergy() > Enemy->GetCurrentCharacterEnergy()) {
-				this->ChangeState(EInteractionState::Lit);
-			} else {
-				this->ChangeState(EInteractionState::Unlit);
-			}
-		} else {
-			this->ChangeState(EInteractionState::Lit);
-		}
-	} else if (Enemy && !Enemy->IsPendingKill()) {
+	if (!Player && !Enemy) { this->ChangeState(EInteractionState::Default); return; }
+
+	if (Player && !Player->IsPendingKill()) playerEnergy = Player->GetCurrentCharacterEnergy();
+	if (Enemy  && !Enemy->IsPendingKill())  enemyEnergy  = Enemy->GetCurrentCharacterEnergy();
+
+	if (playerEnergy > enemyEnergy) {
+		this->ChangeState(EInteractionState::Lit);
+	} else {
 		this->ChangeState(EInteractionState::Unlit);
 	}
 }
 
 void AEnvLightInteractable::UpdateState(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-	ChangeState(EInteractionState::Default);
-	
 	this->CheckForCharacters();
 }

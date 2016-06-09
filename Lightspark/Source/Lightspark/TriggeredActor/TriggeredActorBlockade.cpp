@@ -7,3 +7,11 @@
 ATriggeredActorBlockade::ATriggeredActorBlockade() {
 	this->Tags.Add(TEXT("Blockade"));
 }
+
+void ATriggeredActorBlockade::Trigger(AActor* OtherActor) {
+	Super::Trigger(OtherActor);
+
+	this->SetActorHiddenInGame(true);
+	this->SetActorTickEnabled(false);
+	this->SetActorEnableCollision(false);
+}

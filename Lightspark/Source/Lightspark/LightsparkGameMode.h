@@ -28,6 +28,31 @@ public:
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
+	void SaveGame(FString const &slotName = "DefaultSlot");
+
+	static class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
+	static class UIndexList* LoadIndexList();
+
+private:
+	void CreateIndexLists();
+
+	template <typename ActorType>
+	FORCEINLINE void CreateIndexList(TArray<struct FIndexListData> &IndexList, uint32 range);
+
+	template <typename ActorType>
+	FORCEINLINE void LoadNPCsT(TArray<struct FNPCSaveData> &LoadDataList, class ULightsparkSaveGame* ActorLoadInstance);
+
+	template <typename ActorType>
+	FORCEINLINE void LoadActorsT(TArray<struct FActorSaveData> &LoadDataList, class ULightsparkSaveGame* ActorLoadInstance);
+
+	template <typename ActorType>
+	FORCEINLINE void SaveNPCs(TArray<struct FNPCSaveData> &SaveDataList);
+
+	template <typename ActorType>
+	FORCEINLINE void SaveActors(TArray<struct FActorSaveData> &SaveDataList, uint32 type);
+
+	void LoadActors();
+
 private:
 	ELightsparkPlayState CurrentState;
 };

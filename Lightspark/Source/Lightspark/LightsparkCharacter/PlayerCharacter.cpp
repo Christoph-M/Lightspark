@@ -8,6 +8,7 @@
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
+#include "LightsparkSaveGame.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -66,6 +67,14 @@ APlayerCharacter::APlayerCharacter() {
 	maxLightRange = 2000.0f;
 	minLightTemp = 1000.0f;
 	maxLightTemp = 12000.0f;
+	interactionRadiusFac = 1.0f;
+	lifeLightDecTime = 1.0f;
+	lifeLightNeedsUpdate = false;
+	lightColorFade = 0.0f;
+	lightColorOffsetFac = 0.4f;
+	lightColorOffset = 2500.0f;
+	lightColorFadeTime = 0.1f;
+	lightUpdateTime = 0.0f;
 
 	isInteracting = false;
 	canSpend = false;
@@ -97,7 +106,7 @@ APlayerCharacter::APlayerCharacter() {
 	LifeLight->bUseInverseSquaredFalloff = false;
 	LifeLight->Intensity = 50.0f;
 	LifeLight->bUseTemperature = true;
-
+	
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -105,19 +114,44 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement = GetCharacterMovement();
 
-	if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
-	if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
+	
+	if (PlayerLoadInstance) {
+		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);
+		SetActorRotation(PlayerLoadInstance->Player.CharacterRotation);
+
+		CameraBoom->SetRelativeRotation(PlayerLoadInstance->Player.CameraBoomRotation);
+		FollowCamera->SetRelativeLocation(PlayerLoadInstance->Player.CameraLocation);
+		FollowCamera->SetRelativeRotation(PlayerLoadInstance->Player.CameraRotation);
+
+		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
+		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
+
+		for (int i = 0; i < 4; ++i) {
+			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
+			this->SetJumpEmpowermentActive(i, PlayerLoadInstance->Player.JumpEmpowermentActive[i]);
+
+			if (i == SEmp_FasterSprint && this->GetSprintEmpowermentActive(SEmp_FasterSprint)) maxSprintSpeed = ((fasterSprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
+			if (i == JEmp_HigherJump && this->GetJumpEmpowermentActive(JEmp_HigherJump)) CharacterMovement->JumpZVelocity += addedJumpHeight;
+		}
+	} else {
+		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
+		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+	}
+	
+	lightEnergy = characterEnergy;
 
 	characterRunes = characterEnergy / energyNeededForRune;
 
 	this->SetCurrentMovementState(EMovementState::Default);
+	CurrentLightUpdateState = ELightUpdateState::NoUpdate;
 
 	CharacterMovement->MaxWalkSpeed = baseWalkSpeed;
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
 
-	this->UpdateLight();
+	this->InitLight();
 	
 	if (!OnReachedJumpApex.IsAlreadyBound(this, &APlayerCharacter::JumpApex)) {
 		OnReachedJumpApex.AddDynamic(this, &APlayerCharacter::JumpApex);
@@ -147,6 +181,18 @@ void APlayerCharacter::Tick(float deltaTime) {
 
 	this->CheckMovementInput(deltaTime);
 	this->EvaluateMovementState(deltaTime);
+
+	if (CurrentLightUpdateState != ELightUpdateState::NoUpdate) this->UpdateLight(deltaTime);
+}
+
+void APlayerCharacter::InitLight() {
+	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+
+	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
+	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->UpdateColorAndBrightness();
+
+	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -180,6 +226,58 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	// handle touch devices
 	InputComponent->BindTouch(IE_Pressed, this, &APlayerCharacter::TouchStarted);
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
+
+
+	InputComponent->BindAction("Checkpoint_0", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint0);
+	InputComponent->BindAction("Checkpoint_1", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint1);
+	InputComponent->BindAction("Checkpoint_2", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint2);
+	InputComponent->BindAction("Checkpoint_3", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint3);
+	InputComponent->BindAction("Checkpoint_4", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint4);
+	InputComponent->BindAction("Checkpoint_5", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint5);
+	InputComponent->BindAction("Checkpoint_6", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint6);
+	InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
+	InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
+	InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
+}
+
+void APlayerCharacter::TeleportToCheckpoint0() {
+	this->SetActorLocation(Checkpoints[0]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint1() {
+	this->SetActorLocation(Checkpoints[1]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint2() {
+	this->SetActorLocation(Checkpoints[2]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint3() {
+	this->SetActorLocation(Checkpoints[3]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint4() {
+	this->SetActorLocation(Checkpoints[4]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint5() {
+	this->SetActorLocation(Checkpoints[5]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint6() {
+	this->SetActorLocation(Checkpoints[6]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint7() {
+	this->SetActorLocation(Checkpoints[7]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint8() {
+	this->SetActorLocation(Checkpoints[8]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint9() {
+	this->SetActorLocation(Checkpoints[9]->GetActorLocation());
 }
 
 
@@ -276,6 +374,10 @@ void APlayerCharacter::Interact() {
 				
 				this->Merge();
 
+				ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+				GameModeInstance->SaveGame();
+
 				return;
 			}
 		}
@@ -306,8 +408,8 @@ void APlayerCharacter::ConsumeEnergy() {
 
 		Flower->ChangeState(EInteractionState::Destroyed);
 
+		this->ActivateLightUpdate();
 		characterEnergy += consumeEnergyGain;
-		this->UpdateLight();
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -354,9 +456,8 @@ void APlayerCharacter::Merge() {
 		currentMaxEnergy += energyNeededForRune;
 		if (currentMaxEnergy >= maxEnergy) currentMaxEnergy = maxEnergy;
 
+		this->ActivateLightUpdate();
 		characterEnergy = currentMaxEnergy;
-
-		this->UpdateLight();
 
 		Friendly->Merge();
 	}
@@ -483,9 +584,9 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(jumpEnergyConsume);
-	}
+	//}
 
 	jumpTime += deltaTime;
 
@@ -503,9 +604,9 @@ void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	CharacterMovement->DoJump(false);
 
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(doubleJumpEnergyConsume);
-	}
+	//}
 
 	doubleJumped = true;
 	canDoubleJump = false;
@@ -522,9 +623,9 @@ void APlayerCharacter::Glide(float deltaTime) {
 }
 
 void APlayerCharacter::Sprint(float deltaTime) {
-	if (characterEnergy > energyNeededForRune) {
+	//if (characterEnergy > energyNeededForRune) {
 		this->UseEnergy(sprintEnergyConsume * deltaTime);
-	}
+	//}
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
@@ -535,6 +636,7 @@ void APlayerCharacter::Sprint(float deltaTime) {
 }
 
 void APlayerCharacter::Dash() {
+	this->UseEnergy(3.0f);
 	CharacterMovement->Velocity *= dashSpeed;
 
 	canDash = false;
@@ -561,19 +663,82 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 }
 
 void APlayerCharacter::UseEnergy(float amount) {
+	this->ActivateLightUpdate();
 	characterEnergy -= amount;
-
-	this->UpdateLight();
 }
 
-void APlayerCharacter::UpdateLight() {
-	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+void APlayerCharacter::ActivateLightUpdate() {
+	lightEnergy = characterEnergy;
+	CurrentLightUpdateState = ELightUpdateState::UpdateStart;
+}
 
-	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
-	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
-	LifeLight->UpdateColorAndBrightness();
+void APlayerCharacter::UpdateLight(float deltaTime) {
+	switch (CurrentLightUpdateState) {
+	case ELightUpdateState::UpdateStart:
+		if (lightEnergy == characterEnergy) { CurrentLightUpdateState = ELightUpdateState::UpdateEnd; break; }
 
-	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+		lightColorOffset = LifeLight->Temperature * lightColorOffsetFac;
+		
+		if (lightEnergy > characterEnergy) {
+			CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeIn;
+		} else if (lightEnergy < characterEnergy) {
+			CurrentLightUpdateState = ELightUpdateState::UpdateIncFadeIn;
+		}
+
+		initialLightEnergy = lightEnergy; break;
+	case ELightUpdateState::UpdateDecFadeIn:
+		lightEnergy -= (initialLightEnergy - characterEnergy) / lifeLightDecTime * deltaTime;
+		lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
+
+		LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
+
+		if (lightColorFade <= -lightColorOffset) lightColorFade = -lightColorOffset;
+
+		if (lightEnergy <= characterEnergy) CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeOut; break;
+	case ELightUpdateState::UpdateIncFadeIn:
+		lightEnergy += (characterEnergy - initialLightEnergy) / lifeLightDecTime * deltaTime;
+		lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
+
+		if (lightColorFade >= lightColorOffset) lightColorFade = lightColorOffset;
+		
+		if (lightEnergy >= characterEnergy) CurrentLightUpdateState = ELightUpdateState::UpdateIncFadeOut; break;
+	case ELightUpdateState::UpdateDecFadeOut:
+		lightEnergy = characterEnergy;
+		lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
+
+		LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
+
+		if (lightColorFade >= 0.0f) {
+			LifeLight->Intensity = 50.0f;
+			lightColorFade = 0.0f;
+			CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
+		} break;
+	case ELightUpdateState::UpdateIncFadeOut:
+		lightEnergy = characterEnergy;
+		lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
+
+		if (lightColorFade <= 0.0f) {
+			lightColorFade = 0.0f;
+			CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
+		} break;
+	case ELightUpdateState::UpdateEnd:
+		lightUpdateTime = 0.0f;
+		lifeLightNeedsUpdate = false;
+		this->InitLight(); break;
+	}
+
+	if (CurrentLightUpdateState != ELightUpdateState::UpdateEnd) {
+		lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+
+		LifeLight->AttenuationRadius = minLightRange + lightEnergy * lightRangeFactor;
+		LifeLight->Temperature = minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
+		LifeLight->UpdateColorAndBrightness();
+		LifeLight->UpdateComponentToWorld();
+
+		GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
+		
+		lightUpdateTime += deltaTime;
+	}
 }
 
 void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
@@ -581,7 +746,9 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 
 	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
 
-	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
+	UE_LOG(LogClass, Error, TEXT("PLAYER CompName: %s"), *OtherComp->GetName());
+
+	if (TestInteractable && !TestInteractable->IsPendingKill() && OtherComp->GetName() == TEXT("Sphere") && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
 		TestInteractable->CheckForCharacters();

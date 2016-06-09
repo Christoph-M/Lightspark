@@ -53,9 +53,7 @@ void APlayerLightInteractableFlower::ActivateTriggerActor() {
 	ATriggeredActor* const TriggeredActor = this->GetTriggeredActor();
 
 	if (TriggeredActor && !TriggeredActor->IsPendingKill()) {
-		TriggeredActor->SetActorHiddenInGame(true);
-		TriggeredActor->SetActorTickEnabled(false);
-		TriggeredActor->SetActorEnableCollision(false);
+		TriggeredActor->Trigger(this);
 	}
 }
 
