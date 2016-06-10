@@ -32,7 +32,7 @@ void ATriggeredActor::Tick( float DeltaTime )
 
 }
 
-void ATriggeredActor::Trigger(AActor* OtherActor) {
+void ATriggeredActor::Trigger_Implementation(AActor* OtherActor) {
 	hasBeenTriggered = true;
 	UE_LOG(LogClass, Log, TEXT("Triggering actor: %s"), *OtherActor->GetName());
 }

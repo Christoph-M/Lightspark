@@ -8,8 +8,8 @@ ATriggeredActorBlockade::ATriggeredActorBlockade() {
 	this->Tags.Add(TEXT("Blockade"));
 }
 
-void ATriggeredActorBlockade::Trigger(AActor* OtherActor) {
-	Super::Trigger(OtherActor);
+void ATriggeredActorBlockade::Trigger_Implementation(AActor* OtherActor) {
+	Super::Trigger_Implementation(OtherActor);
 
 	this->SetActorHiddenInGame(true);
 	this->SetActorTickEnabled(false);
