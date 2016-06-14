@@ -26,18 +26,12 @@ ALightsparkGameMode::ALightsparkGameMode()
 
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
-
-	/*ULightsparkSaveGame* PlayerLoadInstance = this->LoadGame();
-
-	if (PlayerLoadInstance) {
-		UGameplayStatics::OpenLevel(this, PlayerLoadInstance->LevelName);
-	}*/
-
 	
-	this->CreateIndexLists();
+	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
+		this->CreateIndexLists();
 
-	this->LoadActors();
-
+		this->LoadActors();
+	}
 
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 }
@@ -50,7 +44,7 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 		if (MyCharacter->GetCurrentCharacterEnergy() <= 0.0f) {
 			this->SetCurrentPlayState(ELightsparkPlayState::GameOver);
 
-			MyCharacter->Destroy();
+			UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
 		}
 	}
 }
@@ -172,7 +166,7 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		str.ReplaceInline(TEXT("/Game/Maps/"), TEXT(""));
 		str.ReplaceInline(TEXT(":PersistentLevel"), TEXT(""));
 
-		LightpsarkSaveInstance->LevelName = FName(*str);
+		LightpsarkSaveInstance->LevelName = FName(*UGameplayStatics::GetCurrentLevelName(this));
 		UE_LOG(LogClass, Log, TEXT("Level Path: %s"), *LightpsarkSaveInstance->LevelName.ToString());
 
 

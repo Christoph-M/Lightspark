@@ -226,6 +226,58 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	// handle touch devices
 	InputComponent->BindTouch(IE_Pressed, this, &APlayerCharacter::TouchStarted);
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
+
+
+	InputComponent->BindAction("Checkpoint_0", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint0);
+	InputComponent->BindAction("Checkpoint_1", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint1);
+	InputComponent->BindAction("Checkpoint_2", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint2);
+	InputComponent->BindAction("Checkpoint_3", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint3);
+	InputComponent->BindAction("Checkpoint_4", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint4);
+	InputComponent->BindAction("Checkpoint_5", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint5);
+	InputComponent->BindAction("Checkpoint_6", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint6);
+	InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
+	InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
+	InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
+}
+
+void APlayerCharacter::TeleportToCheckpoint0() {
+	this->SetActorLocation(Checkpoints[0]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint1() {
+	this->SetActorLocation(Checkpoints[1]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint2() {
+	this->SetActorLocation(Checkpoints[2]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint3() {
+	this->SetActorLocation(Checkpoints[3]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint4() {
+	this->SetActorLocation(Checkpoints[4]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint5() {
+	this->SetActorLocation(Checkpoints[5]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint6() {
+	this->SetActorLocation(Checkpoints[6]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint7() {
+	this->SetActorLocation(Checkpoints[7]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint8() {
+	this->SetActorLocation(Checkpoints[8]->GetActorLocation());
+}
+
+void APlayerCharacter::TeleportToCheckpoint9() {
+	this->SetActorLocation(Checkpoints[9]->GetActorLocation());
 }
 
 
@@ -584,6 +636,7 @@ void APlayerCharacter::Sprint(float deltaTime) {
 }
 
 void APlayerCharacter::Dash() {
+	this->UseEnergy(3.0f);
 	CharacterMovement->Velocity *= dashSpeed;
 
 	canDash = false;
@@ -693,7 +746,9 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 
 	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
 
-	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
+	UE_LOG(LogClass, Error, TEXT("PLAYER CompName: %s"), *OtherComp->GetName());
+
+	if (TestInteractable && !TestInteractable->IsPendingKill() && OtherComp->GetName() == TEXT("Sphere") && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
 		TestInteractable->CheckForCharacters();
