@@ -18,8 +18,10 @@ APlayerCharacter::APlayerCharacter() {
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 	
-	currentMaxEnergy = 100.0f;
+	currentMaxEnergy = 10.0f;
 	energyNeededForRune = 50.0f;
+	lightEnergyGain = 2.0f;
+	shadowEnergyDamage = 1.0f;
 	spendEnergyConsume = 25.0f;
 	consumeEnergyGain = 50.0f;
 
@@ -62,11 +64,14 @@ APlayerCharacter::APlayerCharacter() {
 	dashEnabled = false;
 	isDashing = false;
 	canDash = false;
+	isInShadow = true;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
 	minLightTemp = 1000.0f;
 	maxLightTemp = 12000.0f;
+	minLightIntensity = 10.0f;
+	maxLightIntensity = 50.0f;
 	interactionRadiusFac = 1.0f;
 	lifeLightDecTime = 1.0f;
 	lifeLightNeedsUpdate = false;
@@ -150,6 +155,7 @@ void APlayerCharacter::BeginPlay() {
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
+	lightIntensityFactor = (maxLightIntensity - minLightIntensity) / maxEnergy;
 
 	this->InitLight();
 	
@@ -158,6 +164,14 @@ void APlayerCharacter::BeginPlay() {
 	}
 	if (!LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
 		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+	}
+
+
+	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInLight)) {
+		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::CheckInLight);
+	}
+	if (!GetCapsuleComponent()->OnComponentEndOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInShadow)) {
+		GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::CheckInShadow);
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
@@ -171,6 +185,13 @@ void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 		LandedDelegate.RemoveDynamic(this, &APlayerCharacter::JumpLanded);
 	}
 
+	if (GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInLight)) {
+		GetCapsuleComponent()->OnComponentBeginOverlap.RemoveDynamic(this, &APlayerCharacter::CheckInLight);
+	}
+	if (GetCapsuleComponent()->OnComponentEndOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInShadow)) {
+		GetCapsuleComponent()->OnComponentEndOverlap.RemoveDynamic(this, &APlayerCharacter::CheckInShadow);
+	}
+
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 
 	Super::EndPlay(EndPlayReason);
@@ -182,15 +203,24 @@ void APlayerCharacter::Tick(float deltaTime) {
 	this->CheckMovementInput(deltaTime);
 	this->EvaluateMovementState(deltaTime);
 
+	if (isInShadow) {
+		this->UseEnergy(shadowEnergyDamage * deltaTime);
+	} else {
+		this->UseEnergy(-lightEnergyGain * deltaTime);
+
+		if (characterEnergy >= maxEnergy) characterEnergy = maxEnergy;
+	}
 	if (CurrentLightUpdateState != ELightUpdateState::NoUpdate) this->UpdateLight(deltaTime);
 }
 
 void APlayerCharacter::InitLight() {
-	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+	//lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
 
 	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
-	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->Temperature = 8000.0f; //minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
 	LifeLight->UpdateColorAndBrightness();
+	LifeLight->UpdateComponentToWorld();
 
 	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
 }
@@ -394,7 +424,7 @@ void APlayerCharacter::SpendEnergy() {
 
 		Flower->ChangeState(EInteractionState::Lit);
 
-		this->UseEnergy(spendEnergyConsume);
+		//this->UseEnergy(spendEnergyConsume);
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -408,8 +438,8 @@ void APlayerCharacter::ConsumeEnergy() {
 
 		Flower->ChangeState(EInteractionState::Destroyed);
 
-		this->ActivateLightUpdate();
-		characterEnergy += consumeEnergyGain;
+		/*this->ActivateLightUpdate();
+		characterEnergy += consumeEnergyGain;*/
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -585,7 +615,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 void APlayerCharacter::Jump(float deltaTime) {
 	//if (characterEnergy > energyNeededForRune) {
-		this->UseEnergy(jumpEnergyConsume);
+		//this->UseEnergy(jumpEnergyConsume);
 	//}
 
 	jumpTime += deltaTime;
@@ -605,7 +635,7 @@ void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->DoJump(false);
 
 	//if (characterEnergy > energyNeededForRune) {
-		this->UseEnergy(doubleJumpEnergyConsume);
+		//this->UseEnergy(doubleJumpEnergyConsume);
 	//}
 
 	doubleJumped = true;
@@ -624,7 +654,7 @@ void APlayerCharacter::Glide(float deltaTime) {
 
 void APlayerCharacter::Sprint(float deltaTime) {
 	//if (characterEnergy > energyNeededForRune) {
-		this->UseEnergy(sprintEnergyConsume * deltaTime);
+		//this->UseEnergy(sprintEnergyConsume * deltaTime);
 	//}
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
@@ -636,7 +666,7 @@ void APlayerCharacter::Sprint(float deltaTime) {
 }
 
 void APlayerCharacter::Dash() {
-	this->UseEnergy(3.0f);
+	//this->UseEnergy(3.0f);
 	CharacterMovement->Velocity *= dashSpeed;
 
 	canDash = false;
@@ -728,10 +758,11 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 	}
 
 	if (CurrentLightUpdateState != ELightUpdateState::UpdateEnd) {
-		lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+		//lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
 
 		LifeLight->AttenuationRadius = minLightRange + lightEnergy * lightRangeFactor;
-		LifeLight->Temperature = minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
+		LifeLight->Temperature = 8000.0f + lightColorFade; //minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
+		LifeLight->Intensity = lightIntensityFactor * lightEnergy + minLightIntensity;
 		LifeLight->UpdateColorAndBrightness();
 		LifeLight->UpdateComponentToWorld();
 
@@ -753,6 +784,37 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 
 		TestInteractable->CheckForCharacters();
 	}
+}
+
+void APlayerCharacter::CheckInLight(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
+	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
+
+	UE_LOG(LogClass, Warning, TEXT("PLAYER CompName: %s"), *OtherComp->GetName());
+
+	if (TestInteractable && !TestInteractable->IsPendingKill() && OtherComp->GetName() == TEXT("Sphere") && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
+		UE_LOG(LogClass, Warning, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
+
+		isInShadow = false;
+	}
+}
+
+void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
+	TArray<AActor*> CollectedActors;
+	GetCapsuleComponent()->GetOverlappingActors(CollectedActors);
+
+	if (CollectedActors.Num() == 0) {
+		isInShadow = true; return;
+	}
+
+	for (int i = 0; i < CollectedActors.Num(); ++i) {
+		AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(CollectedActors[i]);
+
+		if (TestInteractable && !TestInteractable->IsPendingKill()) {
+			return;
+		}
+	}
+
+	isInShadow = true;
 }
 
 void APlayerCharacter::DisplayCurrentStates() {

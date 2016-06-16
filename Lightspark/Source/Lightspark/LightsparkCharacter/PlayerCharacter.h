@@ -171,6 +171,12 @@ protected:
 	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;
 
 	UFUNCTION()
+	void CheckInLight(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+	void CheckInShadow(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
 	void TeleportToCheckpoint0();
 
 	UFUNCTION()
@@ -233,6 +239,20 @@ protected:
 	float energyNeededForRune;
 
 	/**
+	* Light Energy Gain (float)
+	* Energy gained per second while the character is in range of a light source
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float lightEnergyGain;
+	
+	/**
+	* Shadow Energy Damage (float)
+	* Damage taken per second while the character is not in range of a light source
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float shadowEnergyDamage;
+
+	/**
 	* Spend Energy Consume (float)
 	* How much energy is taken from character when spending to a flower.
 	*/
@@ -274,6 +294,20 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float maxLightTemp;
+
+	/**
+	* Min Light Intensity (float)
+	* Minimum Life Light Intensity
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float minLightIntensity;
+
+	/**
+	* Max Light Intensity (float)
+	* Maximum Life Light Intensity
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float maxLightIntensity;
 
 	/**
 	* Interaction Radius Factor (float)
@@ -419,6 +453,9 @@ private:
 	float lightTempFactor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
+	float lightIntensityFactor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
 	float lightEnergy;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
@@ -545,7 +582,7 @@ private:
 
 	FVector measureStart, measureEnd;
 
-	bool isInteracting, canSpend, canConsume;
+	bool isInteracting, canSpend, canConsume, isInShadow;
 
 	class AActor* interactedActor;
 };
