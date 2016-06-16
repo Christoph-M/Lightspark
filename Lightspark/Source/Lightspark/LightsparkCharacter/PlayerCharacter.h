@@ -341,6 +341,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	UCurveFloat* FlickerCurve;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	UCurveFloat* IntenstiyOffsetCurve;
+
 
 	/**
 	* Jump Energy Consume (float)

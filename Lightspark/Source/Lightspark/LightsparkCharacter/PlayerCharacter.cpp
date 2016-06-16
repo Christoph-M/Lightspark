@@ -759,10 +759,11 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 
 	if (CurrentLightUpdateState != ELightUpdateState::UpdateEnd) {
 		//lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+		float intensityOffset = IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * (1.0f / characterEnergy);
 
 		LifeLight->AttenuationRadius = minLightRange + lightEnergy * lightRangeFactor;
 		LifeLight->Temperature = 8000.0f + lightColorFade; //minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
-		LifeLight->Intensity = lightIntensityFactor * lightEnergy + minLightIntensity;
+		LifeLight->Intensity = lightIntensityFactor * lightEnergy + minLightIntensity + intensityOffset;
 		LifeLight->UpdateColorAndBrightness();
 		LifeLight->UpdateComponentToWorld();
 
