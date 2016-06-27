@@ -41,7 +41,7 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 
 	APlayerCharacter* MyCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	if (MyCharacter) {
-		if (MyCharacter->GetCurrentCharacterEnergy() <= 0.0f) {
+		if (MyCharacter->GetCurrentCharacterEnergy() < 0.0f) {
 			this->SetCurrentPlayState(ELightsparkPlayState::GameOver);
 
 			UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));

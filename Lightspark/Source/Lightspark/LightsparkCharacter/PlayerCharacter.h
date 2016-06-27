@@ -16,7 +16,8 @@ enum class EMovementState {
 	Jump,
 	Jumping,
 	DoubleJump,
-	JumpGlide
+	JumpGlide,
+	LightFlash
 };
 
 UENUM(BlueprintType)
@@ -141,6 +142,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StopSprinting();
 
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void StartLightFlash();
+
 	void CheckMovementInput(float deltaTime);
 
 	void EvaluateMovementState(float deltaTime);
@@ -160,6 +164,8 @@ protected:
 	void DisableDash();
 
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
+
+	void LightFlash(float deltaTime);
 
 	void UseEnergy(float amount);
 
@@ -344,6 +350,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	UCurveFloat* IntenstiyOffsetCurve;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	UCurveFloat* LightFlashFadeCurve;
+
 
 	/**
 	* Jump Energy Consume (float)
@@ -430,6 +439,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float dashEnabledTime;
 
+	float lightFlashRange;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
 	TArray<class AActor*> Checkpoints;
 
@@ -460,9 +471,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
 	float lightEnergy;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
-	bool lifeLightNeedsUpdate;
 
 	/**
 	* Light Color Offset (float)
@@ -576,6 +584,18 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	bool isDashing;
+
+	
+	float lightFlashTime;
+
+	float lightFlashFadeInTime;
+
+	float lightFlashFadeOutTime;
+
+	float initialAttenuationRadius;
+
+	bool lightFlashActive;
+
 
 	float* maxWalkSpeed;
 
