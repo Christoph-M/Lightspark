@@ -585,6 +585,7 @@ void APlayerCharacter::StopSprinting() {
 
 void APlayerCharacter::StartSneak() {
 	Crouch();
+	this->UseEnergy(characterEnergy);
 }
 
 void APlayerCharacter::StopSneak() {
