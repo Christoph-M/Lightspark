@@ -248,6 +248,9 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
 	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
 
+	InputComponent->BindAction("Sneak", IE_Pressed, this, &APlayerCharacter::StartSneak);
+	InputComponent->BindAction("Sneak", IE_Released, this, &APlayerCharacter::StopSneak);
+
 	InputComponent->BindAction("FlashOfLight", IE_Pressed, this, &APlayerCharacter::StartLightFlash);
 
 	InputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
@@ -577,6 +580,15 @@ void APlayerCharacter::StopSprinting() {
 	GetWorld()->GetTimerManager().UnPauseTimer(DashTimerHandle);
 	UE_LOG(LogClass, Log, TEXT("Stopped sprinting. Hold time: %f"), sprintKeyHoldTime);
 	sprintKeyHoldTime = 0.0f;
+}
+
+
+void APlayerCharacter::StartSneak() {
+	Crouch();
+}
+
+void APlayerCharacter::StopSneak() {
+	UnCrouch();
 }
 
 

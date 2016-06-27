@@ -143,6 +143,12 @@ protected:
 	void StopSprinting();
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void StartSneak();
+
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void StopSneak();
+
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StartLightFlash();
 
 	void CheckMovementInput(float deltaTime);
