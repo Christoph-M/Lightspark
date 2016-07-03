@@ -445,6 +445,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float dashEnabledTime;
 
+	/**
+	* Sneak Light Range (float)
+	* Range offset applied to the life light when sneak ability is used
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Sneak", Meta = (BlueprintProtected = "true"))
+	float sneakLightRangeOffset;
+
+	/**
+	* Light Flash Range (float)
+	* Range of the life light when flash of light ability is used
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float lightFlashRange;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
@@ -592,6 +604,9 @@ private:
 	bool isDashing;
 
 	
+	float sneakOffset;
+
+
 	float lightFlashTime;
 
 	float lightFlashFadeInTime;

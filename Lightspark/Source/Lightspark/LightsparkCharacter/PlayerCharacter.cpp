@@ -47,6 +47,8 @@ APlayerCharacter::APlayerCharacter() {
 	dashSpeed = 20.0f;
 	dashEnabledTime = 3.0f;
 
+	sneakLightRangeOffset = 5.0f;
+	sneakOffset = 0.0f;
 	lightFlashRange = 5000.0f;
 	lightFlashTime = 0.0f;
 	initialAttenuationRadius = 0.0f;
@@ -213,10 +215,8 @@ void APlayerCharacter::Tick(float deltaTime) {
 	if (!lightFlashActive) {
 		if (isInShadow) {
 			this->UseEnergy(shadowEnergyDamage * deltaTime);
-		} else {
+		} else  if (characterEnergy < maxEnergy) {
 			this->UseEnergy(-lightEnergyGain * deltaTime);
-
-			if (characterEnergy >= maxEnergy) characterEnergy = maxEnergy;
 		}
 
 		this->UpdateLight(deltaTime);
@@ -584,12 +584,16 @@ void APlayerCharacter::StopSprinting() {
 
 
 void APlayerCharacter::StartSneak() {
-	Crouch();
-	this->UseEnergy(characterEnergy);
+	if (!lightFlashActive) {
+		Crouch();
+		this->UseEnergy(characterEnergy);
+		sneakOffset = sneakLightRangeOffset;
+	}
 }
 
 void APlayerCharacter::StopSneak() {
 	UnCrouch();
+	sneakOffset = 0.0f;
 }
 
 
@@ -599,6 +603,8 @@ void APlayerCharacter::StartLightFlash() {
 	*maxWalkSpeed = maxSprintSpeed;
 	lightFlashTime = 0.0f;
 	initialAttenuationRadius = LifeLight->AttenuationRadius;
+	LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
+	this->StopSneak();
 }
 
 
@@ -739,6 +745,7 @@ void APlayerCharacter::LightFlash(float deltaTime) {
 		LifeLight->AttenuationRadius = newRadius + LightFlashFadeCurve->GetFloatValue(lightFlashTime) * (lightFlashRange - newRadius);
 	}
 
+	LifeLight->UpdateColorAndBrightness();
 	LifeLight->UpdateComponentToWorld();
 
 	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
@@ -749,6 +756,7 @@ void APlayerCharacter::UseEnergy(float amount) {
 		this->ActivateLightUpdate();
 		characterEnergy -= amount;
 		if (characterEnergy <= 0.0f) characterEnergy = 0.0f;
+		if (characterEnergy >= maxEnergy) characterEnergy = maxEnergy;
 	}
 }
 
@@ -760,14 +768,14 @@ void APlayerCharacter::ActivateLightUpdate() {
 void APlayerCharacter::UpdateLight(float deltaTime) {
 	switch (CurrentLightUpdateState) {
 		case ELightUpdateState::NoUpdate: {
-			float intensityOffset = IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * ((maxEnergy - characterEnergy) / maxEnergy);
-			LifeLight->Intensity = (lightIntensityFactor * lightEnergy + minLightIntensity) * intensityOffset;
+			float intensityOffset = (sneakOffset > 0.0f) ? IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * ((maxEnergy - characterEnergy) / maxEnergy) : 1.0f;
+			LifeLight->Intensity = (lightIntensityFactor * lightEnergy + minLightIntensity - sneakOffset) * intensityOffset;
 			LifeLight->UpdateColorAndBrightness(); break; }
 		case ELightUpdateState::UpdateStart:
 			if (lightEnergy == characterEnergy) { CurrentLightUpdateState = ELightUpdateState::UpdateEnd; break; }
 
 			lightColorOffset = LifeLight->Temperature * lightColorOffsetFac;
-		
+			
 			if (lightEnergy > characterEnergy) {
 				CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeIn;
 			} else if (lightEnergy < characterEnergy) {
@@ -818,7 +826,7 @@ void APlayerCharacter::UpdateLight(float deltaTime) {
 
 	if (CurrentLightUpdateState != ELightUpdateState::UpdateEnd && CurrentLightUpdateState != ELightUpdateState::NoUpdate) {
 		//lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
-		float intensityOffset = IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * ((maxEnergy - characterEnergy) / maxEnergy);
+		float intensityOffset = (characterEnergy == maxEnergy) ? 1.0f : IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * ((maxEnergy - characterEnergy) / maxEnergy);	// Doesn't work as intended
 		
 		LifeLight->AttenuationRadius = minLightRange + lightEnergy * lightRangeFactor;
 		//LifeLight->Temperature = 8000.0f + lightColorFade; //minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
