@@ -17,9 +17,17 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 
 void AEnemyAiCharacter::BeginPlay() {
 	Super::BeginPlay();
+
+	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
+		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::CheckPlayer);
+	}
 }
 
 void AEnemyAiCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	if (GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
+		GetCapsuleComponent()->OnComponentBeginOverlap.RemoveDynamic(this, &AEnemyAiCharacter::CheckPlayer);
+	}
+
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -32,6 +40,14 @@ void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
 		TestInteractable->CheckForCharacters();
+	}
+}
+
+void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
+	APlayerCharacter* const TestPlayer = Cast<APlayerCharacter>(OtherActor);
+
+	if (TestPlayer && !TestPlayer->IsPendingKill()) {
+		TestPlayer->MyTakeDamage();
 	}
 }
 

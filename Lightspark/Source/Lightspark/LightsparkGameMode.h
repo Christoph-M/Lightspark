@@ -53,6 +53,9 @@ private:
 
 	void LoadActors();
 
+public:
+	bool updateIndexList;
+
 private:
 	ELightsparkPlayState CurrentState;
 };

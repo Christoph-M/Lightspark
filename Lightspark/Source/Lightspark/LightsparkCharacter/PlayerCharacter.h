@@ -82,6 +82,7 @@ public:
 	FORCEINLINE class UPointLightComponent* GetLifeLight() const { return LifeLight; }
 
 	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
+	void MyTakeDamage();
 
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
