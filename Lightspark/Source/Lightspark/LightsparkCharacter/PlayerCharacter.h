@@ -603,6 +603,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	bool isDashing;
 
+
+	float sneakEnergy;
+
 	
 	float sneakOffset;
 
