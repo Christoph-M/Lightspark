@@ -16,5 +16,7 @@ class LIGHTSPARK_API ATriggeredActorBlockade : public ATriggeredActor
 public:
 	ATriggeredActorBlockade();
 	
-	virtual void Trigger(class AActor* OtherActor) override;
+	UFUNCTION(BlueprintNativeEvent)
+	void Trigger(class AActor* OtherActor);
+	virtual void Trigger_Implementation(class AActor* OtherActor) override;
 };
