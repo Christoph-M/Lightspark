@@ -35,7 +35,7 @@ void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class
 	Super::EvaluateLightInteraction(OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
-
+	
 	if (TestInteractable && !TestInteractable->IsPendingKill() && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
@@ -48,6 +48,7 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 
 	if (TestPlayer && !TestPlayer->IsPendingKill()) {
 		TestPlayer->MyTakeDamage();
+		this->Destroy();
 	}
 }
 
