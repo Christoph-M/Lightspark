@@ -30,4 +30,7 @@ public:
 protected:
 	UFUNCTION()
 	void UpdateState(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+protected:
+	bool resetState;
 };

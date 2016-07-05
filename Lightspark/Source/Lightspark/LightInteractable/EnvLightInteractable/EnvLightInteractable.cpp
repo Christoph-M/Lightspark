@@ -9,6 +9,8 @@
 AEnvLightInteractable::AEnvLightInteractable() {
 	PrimaryActorTick.bCanEverTick = true;
 
+	resetState = true;
+
 	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	InteractionSphere->AttachTo(RootComponent);
 }
@@ -18,7 +20,7 @@ void AEnvLightInteractable::BeginPlay() {
 
 	this->CheckForCharacters();
 
-	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState)) {
+	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState) {
 		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 }

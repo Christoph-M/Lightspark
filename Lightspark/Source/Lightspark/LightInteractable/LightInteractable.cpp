@@ -60,18 +60,30 @@ void ALightInteractable::ChangeState(EInteractionState newState) {
 
 void ALightInteractable::StateChangeDefault_Implementation() {
 	UE_LOG(LogClass, Log, TEXT("%s is in default state."), *this->GetName());
+
+	if (this->GetTriggerActorOnStateChange() == EInteractionState::Default) this->ActivateTriggerActor();
+	if (this->GetTriggerCharacterOnStateChange() == EInteractionState::Default) this->ActivateTriggerCharacter();
 }
 
 void ALightInteractable::StateChangeLit_Implementation() {
 	UE_LOG(LogClass, Log, TEXT("%s was lit."), *this->GetName());
+
+	if (this->GetTriggerActorOnStateChange() == EInteractionState::Lit) this->ActivateTriggerActor();
+	if (this->GetTriggerCharacterOnStateChange() == EInteractionState::Lit) this->ActivateTriggerCharacter();
 }
 
 void ALightInteractable::StateChangeUnlit_Implementation() {
 	UE_LOG(LogClass, Log, TEXT("%s was unlit."), *this->GetName());
+
+	if (this->GetTriggerActorOnStateChange() == EInteractionState::Unlit) this->ActivateTriggerActor();
+	if (this->GetTriggerCharacterOnStateChange() == EInteractionState::Unlit) this->ActivateTriggerCharacter();
 }
 
 void ALightInteractable::StateChangeDestroyed_Implementation() {
 	UE_LOG(LogClass, Log, TEXT("%s was destroyed."), *this->GetName());
+
+	if (this->GetTriggerActorOnStateChange() == EInteractionState::Destroyed) this->ActivateTriggerActor();
+	if (this->GetTriggerCharacterOnStateChange() == EInteractionState::Destroyed) this->ActivateTriggerCharacter();
 }
 
 void ALightInteractable::StateChangeUnknown_Implementation() {
@@ -80,6 +92,7 @@ void ALightInteractable::StateChangeUnknown_Implementation() {
 
 void ALightInteractable::ActivateTriggerActor() {
 	if (TriggeredActor && !TriggeredActor->IsPendingKill()) {
+		TriggeredActor->Trigger(this);
 		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
 	} else {
 		UE_LOG(LogClass, Warning, TEXT("Triggered Actor is not set or pending kill."));
