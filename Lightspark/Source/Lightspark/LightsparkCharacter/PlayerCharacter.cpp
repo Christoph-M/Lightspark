@@ -80,7 +80,7 @@ APlayerCharacter::APlayerCharacter() {
 	maxLightTemp = 12000.0f;
 	minLightIntensity = 10.0f;
 	maxLightIntensity = 50.0f;
-	interactionRadiusFac = 1.0f;
+	interactionRadiusFac = 0.5f;
 	lifeLightDecTime = 1.0f;
 	lightColorFade = 0.0f;
 	lightColorOffsetFac = 0.4f;
@@ -385,6 +385,17 @@ void APlayerCharacter::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
+	}
+}
+
+
+void APlayerCharacter::MyTakeDamage() {
+	if (characterEnergy <= 0.0f) {
+		/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
+		GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
+		characterEnergy = -0.1f;
+	} else {
+		this->UseEnergy(2.0f);
 	}
 }
 

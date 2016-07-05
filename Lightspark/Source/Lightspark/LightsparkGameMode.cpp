@@ -22,14 +22,18 @@ ALightsparkGameMode::ALightsparkGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+
+	updateIndexList = false;
 }
 
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 	
-	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
+	
+	if (updateIndexList) {
 		this->CreateIndexLists();
-
+		updateIndexList = false;
+	} else if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
 		this->LoadActors();
 	}
 
