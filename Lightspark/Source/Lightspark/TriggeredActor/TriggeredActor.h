@@ -30,7 +30,9 @@ public:
 
 	bool HasBeenTriggered() { return hasBeenTriggered; }
 
-	virtual void Trigger(class AActor* OtherActor);
+	UFUNCTION(BlueprintNativeEvent)
+	void Trigger(class AActor* OtherActor);
+	virtual void Trigger_Implementation(class AActor* OtherActor);
 
 protected:
 	bool hasBeenTriggered;
