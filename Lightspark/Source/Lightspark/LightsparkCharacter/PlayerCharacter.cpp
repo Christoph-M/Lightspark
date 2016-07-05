@@ -21,6 +21,7 @@ APlayerCharacter::APlayerCharacter() {
 	currentMaxEnergy = 10.0f;
 	energyNeededForRune = 50.0f;
 	lightEnergyGain = 2.0f;
+	hitEnergyDamage = 2.0f;
 	shadowEnergyDamage = 1.0f;
 	spendEnergyConsume = 25.0f;
 	consumeEnergyGain = 50.0f;
@@ -395,7 +396,7 @@ void APlayerCharacter::MyTakeDamage() {
 		GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
 		characterEnergy = -0.1f;
 	} else {
-		this->UseEnergy(2.0f);
+		this->UseEnergy(hitEnergyDamage);
 	}
 }
 

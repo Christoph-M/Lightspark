@@ -257,6 +257,13 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float lightEnergyGain;
+
+	/**
+	* Hit Energy Damage (flaot)
+	* Energy damage taken on enemy contact with life light
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float hitEnergyDamage;
 	
 	/**
 	* Shadow Energy Damage (float)
