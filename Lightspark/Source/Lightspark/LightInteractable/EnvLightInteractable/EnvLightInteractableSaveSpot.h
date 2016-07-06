@@ -14,4 +14,8 @@ class LIGHTSPARK_API AEnvLightInteractableSaveSpot : public AEnvLightInteractabl
 	
 public:
 	AEnvLightInteractableSaveSpot();
+
+	virtual void StateChangeLit_Implementation() override;
+
+	virtual void CheckForCharacters() override;
 };

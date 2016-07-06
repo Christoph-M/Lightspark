@@ -33,6 +33,11 @@ public:
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return InteractableMesh; }
 	FORCEINLINE class UPointLightComponent* GetLight() const { return PointLight; }
 
+
+	uint32 GetID() { return id; }
+	virtual void SetID();
+
+
 	class ATriggeredActor* GetTriggeredActor() const { return TriggeredActor; }
 	class ALightsparkCharacter* GetTriggeredCharacter() const { return TriggeredCharacter; }
 
@@ -69,6 +74,8 @@ protected:
 	virtual void ActivateTriggerCharacter();
 
 protected:
+	uint32 id;
+
 	EInteractionState CurrentState;
 
 private:

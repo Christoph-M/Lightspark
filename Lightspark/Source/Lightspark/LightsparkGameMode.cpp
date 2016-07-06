@@ -33,7 +33,7 @@ void ALightsparkGameMode::BeginPlay() {
 	if (updateIndexList) {
 		this->CreateIndexLists();
 		updateIndexList = false;
-	} else if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
+	} else /*if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass"))*/ {
 		this->LoadActors();
 	}
 
@@ -58,7 +58,7 @@ void ALightsparkGameMode::CreateIndexLists() {
 
 		this->CreateIndexList<AFriendlyAiCharacter>     (IndexListInstance->NPCIndexList,                FRIENDLY_AI);
 		this->CreateIndexList<AEnemyAiCharacter>        (IndexListInstance->EnemyIndexList,              ENEMY_AI);
-		this->CreateIndexList<APlayerLightInteractable> (IndexListInstance->PlayerInteractableIndexList, PLAYER_INTERACTABLE);
+		this->CreateIndexList<ALightInteractable>		(IndexListInstance->InteractableIndexList,		 INTERACTABLE);
 		this->CreateIndexList<ATriggeredActor>          (IndexListInstance->TriggeredActorIndexList,     TRIGGERED_ACTOR);
 
 	UGameplayStatics::SaveGameToSlot(IndexListInstance, IndexListInstance->SaveSlotName, IndexListInstance->UserIndex);
@@ -89,8 +89,8 @@ void ALightsparkGameMode::LoadActors() {
 	/*this->LoadActorsT<APlayerLightInteractable>(ActorLoadInstance->PlayerInteractables, ActorLoadInstance);
 	this->LoadActorsT<ATriggeredActor>(ActorLoadInstance->TriggeredActors, ActorLoadInstance);*/
 
-	for (TActorIterator<APlayerLightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
-		APlayerLightInteractable* Actor = *ActorItr;
+	for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		ALightInteractable* Actor = *ActorItr;
 
 		Actor->SetID();
 
@@ -198,8 +198,8 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 
 		int i = 0;
 
-		for (TActorIterator<APlayerLightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
-			APlayerLightInteractable* Actor = *ActorItr;
+		for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ALightInteractable* Actor = *ActorItr;
 
 			LightpsarkSaveInstance->PlayerInteractables.Add(FActorSaveData());
 			LightpsarkSaveInstance->PlayerInteractables[i].id = Actor->GetID();

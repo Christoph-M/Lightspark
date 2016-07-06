@@ -4,6 +4,8 @@
 #include "LightInteractable/LightInteractable.h"
 #include "TriggeredActor/TriggeredActor.h"
 #include "LightsparkCharacter/LightsparkCharacter.h"
+#include "LightsparkGameMode.h"
+#include "IndexList.h"
 
 
 // Sets default values
@@ -40,6 +42,22 @@ void ALightInteractable::Tick( float DeltaTime )
 
 }
 
+void ALightInteractable::SetID() {
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+
+	if (IndexListInstance) {
+		for (FIndexListData Entry : IndexListInstance->InteractableIndexList) {
+			if (this->GetActorLocation() == Entry.ActorLocation) {
+				id = Entry.id;
+			}
+		}
+
+		UE_LOG(LogClass, Log, TEXT("LightInteractable ID: %d"), id);
+	} else {
+		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+	}
+}
+
 void ALightInteractable::ChangeState(EInteractionState newState) {
 	if (CurrentState != newState) {
 		if (CurrentState != EInteractionState::Destroyed) {
@@ -48,7 +66,7 @@ void ALightInteractable::ChangeState(EInteractionState newState) {
 			switch (CurrentState) {
 				case EInteractionState::Default:	StateChangeDefault();	break;
 				case EInteractionState::Lit:		StateChangeLit();		break;
-				case EInteractionState::Unlit:		StateChangeUnlit();		break;
+				case EInteractionState::Unlit:		StateChangeUnlit();	    break;
 				case EInteractionState::Destroyed:	StateChangeDestroyed(); break;
 				default:							StateChangeUnknown();
 			}

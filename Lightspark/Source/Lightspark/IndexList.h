@@ -8,7 +8,7 @@
 
 #define FRIENDLY_AI 100
 #define ENEMY_AI 200
-#define PLAYER_INTERACTABLE 300
+#define INTERACTABLE 300
 #define TRIGGERED_ACTOR 400
 
 
@@ -49,7 +49,7 @@ public:
 	TArray<FIndexListData> EnemyIndexList;
 
 	UPROPERTY(VisibleAnywhere, Category = "Index List")
-	TArray<FIndexListData> PlayerInteractableIndexList;
+	TArray<FIndexListData> InteractableIndexList;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Index List")
 	TArray<FIndexListData> TriggeredActorIndexList;

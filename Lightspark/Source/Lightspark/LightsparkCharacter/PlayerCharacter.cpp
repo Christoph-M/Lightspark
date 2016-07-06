@@ -5,6 +5,7 @@
 #include "LightsparkGameMode.h"
 #include "LightInteractable/LightInteractable.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
+#include "LightInteractable/EnvLightInteractable/EnvLightInteractableSaveSpot.h"
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
@@ -616,13 +617,15 @@ void APlayerCharacter::StopSneak() {
 
 
 void APlayerCharacter::StartLightFlash() {
-	lightFlashActive = true;
-	this->StopSneak();
-	characterEnergy = maxEnergy;
-	*maxWalkSpeed = maxSprintSpeed;
-	lightFlashTime = 0.0f;
-	initialAttenuationRadius = LifeLight->AttenuationRadius;
-	LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
+	if (!lightFlashActive) {
+		lightFlashActive = true;
+		this->StopSneak();
+		characterEnergy = maxEnergy;
+		*maxWalkSpeed = maxSprintSpeed;
+		lightFlashTime = 0.0f;
+		initialAttenuationRadius = LifeLight->AttenuationRadius;
+		LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
+	}
 }
 
 
@@ -876,7 +879,7 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 }
 
 void APlayerCharacter::CheckInLight(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
-	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
+	AEnvLightInteractableSaveSpot* const TestInteractable = Cast<AEnvLightInteractableSaveSpot>(OtherActor);
 
 	UE_LOG(LogClass, Warning, TEXT("PLAYER CompName: %s"), *OtherComp->GetName());
 
@@ -896,7 +899,7 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 	}
 
 	for (int i = 0; i < CollectedActors.Num(); ++i) {
-		AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(CollectedActors[i]);
+		AEnvLightInteractableSaveSpot* const TestInteractable = Cast<AEnvLightInteractableSaveSpot>(CollectedActors[i]);
 
 		if (TestInteractable && !TestInteractable->IsPendingKill()) {
 			return;

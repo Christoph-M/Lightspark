@@ -18,7 +18,7 @@ AEnvLightInteractable::AEnvLightInteractable() {
 void AEnvLightInteractable::BeginPlay() {
 	Super::BeginPlay();
 
-	this->CheckForCharacters();
+	if (resetState) this->CheckForCharacters();
 
 	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState) {
 		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
