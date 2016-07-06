@@ -6,6 +6,7 @@
 #include "LightInteractable/LightInteractable.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractableSaveSpot.h"
+#include "TriggeredActor/TriggeredActorSegmentDoor.h"
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractableFlower.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
@@ -177,7 +178,7 @@ void APlayerCharacter::BeginPlay() {
 	if (!LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
 		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
 	}
-
+	
 
 	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInLight)) {
 		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::CheckInLight);
@@ -435,6 +436,19 @@ void APlayerCharacter::Interact() {
 				interactedActor = TestCharacter;
 				
 				this->Merge();
+
+				ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+				GameModeInstance->SaveGame();
+
+				return;
+			}
+
+
+			ATriggeredActorSegmentDoor* TestDoor = Cast<ATriggeredActorSegmentDoor>(CollectedActors[i]);
+
+			if (TestDoor && !TestDoor->IsPendingKill()) {
+				TestDoor->OpenDoor();
 
 				ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
 

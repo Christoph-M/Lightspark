@@ -25,6 +25,7 @@ public:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
@@ -73,6 +74,17 @@ protected:
 	virtual void ActivateTriggerActor();
 	virtual void ActivateTriggerCharacter();
 
+	UFUNCTION()
+	void LightUp(int32 segment);
+
+public:
+	/**
+	* Segment (int)
+	* The level segment this light interactable belongs to.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Segment", meta = (AllowPrivateAccess = "true"))
+	int segment;
+
 protected:
 	uint32 id;
 
@@ -84,6 +96,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LightInteractable", meta = (AllowPrivateAccess = "true"))
 	class UPointLightComponent* PointLight;
+
+	class ATriggeredActorSegmentDoor* SegmentDoor;
 
 	/**
 	* Triggered Actor (class ATriggeredActor*)

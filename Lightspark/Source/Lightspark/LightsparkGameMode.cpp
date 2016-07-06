@@ -10,6 +10,7 @@
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractable.h"
 #include "TriggeredActor/TriggeredActor.h"
+#include "TriggeredActor/TriggeredActorSegmentDoor.h"
 #include "IndexList.h"
 #include "LightsparkSaveGame.h"
 
@@ -28,8 +29,7 @@ ALightsparkGameMode::ALightsparkGameMode()
 
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
-	
-	
+
 	if (updateIndexList) {
 		this->CreateIndexLists();
 		updateIndexList = false;

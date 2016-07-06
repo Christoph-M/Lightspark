@@ -6,7 +6,18 @@
 
 
 ATriggeredActorSegmentDoor::ATriggeredActorSegmentDoor() {
-	
+	doorCanBeOpened = false;
+	doorOpen = false;
+}
+
+void ATriggeredActorSegmentDoor::BeginPlay() {
+	Super::BeginPlay();
+
+	for (int i = 0; i < SaveSpots.Num(); ++i) {
+		PlatesLitUp.Add(false);
+	}
+
+	this->Trigger(this);
 }
 
 void ATriggeredActorSegmentDoor::Trigger_Implementation(class AActor* OtherActor) {
@@ -19,13 +30,21 @@ void ATriggeredActorSegmentDoor::Trigger_Implementation(class AActor* OtherActor
 
 		for (int i = 0; i < SaveSpots.Num(); ++i) {
 			if (SaveSpots[i]->GetCurrentState() != EInteractionState::Lit) activateDoor = false;
+			else PlatesLitUp[i] = true;
 		}
 
-		if (activateDoor) this->OpenDoor();
+		doorCanBeOpened = activateDoor;
 	}
 }
 
-void ATriggeredActorSegmentDoor::OpenDoor_Implementation() {
+void ATriggeredActorSegmentDoor::OpenDoor() {
+	if (doorCanBeOpened) {
+		this->ActivateDoor();
+	}
+}
+
+void ATriggeredActorSegmentDoor::ActivateDoor_Implementation() {
 	UE_LOG(LogClass, Log, TEXT("Door has been opened"));
-	this->Destroy();
+	doorOpen = true;
+	OnDoorOpened.Broadcast(segment);
 }

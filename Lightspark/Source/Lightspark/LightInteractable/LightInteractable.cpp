@@ -3,6 +3,7 @@
 #include "Lightspark.h"
 #include "LightInteractable/LightInteractable.h"
 #include "TriggeredActor/TriggeredActor.h"
+#include "TriggeredActor/TriggeredActorSegmentDoor.h"
 #include "LightsparkCharacter/LightsparkCharacter.h"
 #include "LightsparkGameMode.h"
 #include "IndexList.h"
@@ -32,7 +33,23 @@ void ALightInteractable::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		ATriggeredActorSegmentDoor* Door = *ActorItr;
+
+		if (Door && !Door->IsPendingKill() && Door->segment == this->segment) {
+			SegmentDoor = Door;
+			
+			if (!SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &ALightInteractable::LightUp)) {
+				SegmentDoor->OnDoorOpened.AddDynamic(this, &ALightInteractable::LightUp);
+			}
+		}
+	}
+}
+
+void ALightInteractable::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 	
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -44,7 +61,7 @@ void ALightInteractable::Tick( float DeltaTime )
 
 void ALightInteractable::SetID() {
 	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
-
+	
 	if (IndexListInstance) {
 		for (FIndexListData Entry : IndexListInstance->InteractableIndexList) {
 			if (this->GetActorLocation() == Entry.ActorLocation) {
@@ -122,5 +139,13 @@ void ALightInteractable::ActivateTriggerCharacter() {
 		UE_LOG(LogClass, Log, TEXT("Activated %s"), *this->TriggeredActor->GetName());
 	} else {
 		UE_LOG(LogClass, Warning, TEXT("Triggered Character is not set or pending kill."));
+	}
+}
+
+void ALightInteractable::LightUp(int32 segment) {
+	this->ChangeState(EInteractionState::Lit);
+
+	if (SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &ALightInteractable::LightUp)) {
+		SegmentDoor->OnDoorOpened.RemoveDynamic(this, &ALightInteractable::LightUp);
 	}
 }

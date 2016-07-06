@@ -6,21 +6,38 @@
 #include "TriggeredActorSegmentDoor.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLightUpSegment, int32, segment);
+
 UCLASS()
 class LIGHTSPARK_API ATriggeredActorSegmentDoor : public ATriggeredActor
 {
 	GENERATED_BODY()
-	
-	
+
+
 public:
 	ATriggeredActorSegmentDoor();
 
+	virtual void BeginPlay() override;
+
 	virtual void Trigger_Implementation(class AActor* OtherActor) override;
 
-	UFUNCTION(BlueprintNativeEvent)
 	void OpenDoor();
-	void OpenDoor_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ActivateDoor();
+	void ActivateDoor_Implementation();
+
+	UPROPERTY(BlueprintAssignable)
+	FLightUpSegment OnDoorOpened;
 	
+public:
+	/**
+	* Segment (int)
+	* The level segment this door belongs to.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Segment", meta = (AllowPrivateAccess = "true"))
+	int segment;
+
 private:
 	/**
 	* Save Spots (TArray<AEnvLightInteractableSaveSpot*>)
@@ -28,4 +45,21 @@ private:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
 	TArray<class AEnvLightInteractableSaveSpot*>  SaveSpots;
+
+	/**
+	* Plates Lit Up (TArray<bool>)
+	* Which plates should be lit up.
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
+	TArray<bool> PlatesLitUp;
+
+	/**
+	* Door Open (bool)
+	* Wether the door is open or not.
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TriggeredActors", meta = (AllowPrivateAccess = "true"))
+	bool doorOpen;
+
+private:
+	bool doorCanBeOpened;
 };
