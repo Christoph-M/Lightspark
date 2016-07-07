@@ -4,6 +4,7 @@
 #include "EnemyAiCharacter.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "LightsparkCharacter/PlayerCharacter.h"
+#include "TriggeredActor/TriggeredActorSegmentDoor.h"
 #include "LightsparkGameMode.h"
 #include "IndexList.h"
 #include "LightsparkSaveGame.h"
@@ -17,6 +18,18 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 
 void AEnemyAiCharacter::BeginPlay() {
 	Super::BeginPlay();
+
+	for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		ATriggeredActorSegmentDoor* Door = *ActorItr;
+
+		if (Door && !Door->IsPendingKill() && Door->segment == this->segment) {
+			SegmentDoor = Door;
+
+			if (!SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &AEnemyAiCharacter::DoorOpened)) {
+				SegmentDoor->OnDoorOpened.AddDynamic(this, &AEnemyAiCharacter::DoorOpened);
+			}
+		}
+	}
 
 	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
 		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::CheckPlayer);
@@ -48,7 +61,7 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 
 	if (TestPlayer && !TestPlayer->IsPendingKill()) {
 		TestPlayer->MyTakeDamage();
-		this->Destroy();
+		this->Disable();
 	}
 }
 
@@ -66,4 +79,12 @@ void AEnemyAiCharacter::SetID() {
 	}
 
 	UE_LOG(LogClass, Log, TEXT("Enemy ID: %d"), id);
+}
+
+void AEnemyAiCharacter::DoorOpened(int32 segmentt) {
+	this->Disable();
+
+	if (SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &AEnemyAiCharacter::DoorOpened)) {
+		SegmentDoor->OnDoorOpened.RemoveDynamic(this, &AEnemyAiCharacter::DoorOpened);
+	}
 }

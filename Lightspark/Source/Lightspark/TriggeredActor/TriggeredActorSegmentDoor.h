@@ -27,6 +27,9 @@ public:
 	void ActivateDoor();
 	void ActivateDoor_Implementation();
 
+	UFUNCTION()
+	bool IsDoorOpen() { return doorOpen; }
+
 	UPROPERTY(BlueprintAssignable)
 	FLightUpSegment OnDoorOpened;
 	

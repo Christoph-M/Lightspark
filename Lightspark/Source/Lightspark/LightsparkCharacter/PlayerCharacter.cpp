@@ -450,10 +450,6 @@ void APlayerCharacter::Interact() {
 			if (TestDoor && !TestDoor->IsPendingKill()) {
 				TestDoor->OpenDoor();
 
-				ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
-
-				GameModeInstance->SaveGame();
-
 				return;
 			}
 		}

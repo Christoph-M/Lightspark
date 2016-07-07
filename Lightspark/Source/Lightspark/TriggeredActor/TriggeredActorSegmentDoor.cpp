@@ -3,6 +3,8 @@
 #include "Lightspark.h"
 #include "TriggeredActorSegmentDoor.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractableSaveSpot.h"
+#include "LightsparkGameMode.h"
+#include "LightsparkSaveGame.h"
 
 
 ATriggeredActorSegmentDoor::ATriggeredActorSegmentDoor() {
@@ -13,11 +15,22 @@ ATriggeredActorSegmentDoor::ATriggeredActorSegmentDoor() {
 void ATriggeredActorSegmentDoor::BeginPlay() {
 	Super::BeginPlay();
 
+	ULightsparkSaveGame* LoadInstance = ALightsparkGameMode::LoadGame();
+
+	if (LoadInstance) {
+		for (FLevelSegmentData Entry : LoadInstance->LevelSegments) {
+			if (Entry.segment == this->segment) {
+				doorOpen = Entry.doorOpen;
+			}
+		}
+	}
+
 	for (int i = 0; i < SaveSpots.Num(); ++i) {
 		PlatesLitUp.Add(false);
 	}
 
 	this->Trigger(this);
+	if (doorOpen) this->ActivateDoor();
 }
 
 void ATriggeredActorSegmentDoor::Trigger_Implementation(class AActor* OtherActor) {
@@ -45,6 +58,14 @@ void ATriggeredActorSegmentDoor::OpenDoor() {
 
 void ATriggeredActorSegmentDoor::ActivateDoor_Implementation() {
 	UE_LOG(LogClass, Log, TEXT("Door has been opened"));
-	doorOpen = true;
+
+	if (!doorOpen) {
+		doorOpen = true;
+
+		ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+		GameModeInstance->SaveGame();
+	}
+
 	OnDoorOpened.Broadcast(segment);
 }

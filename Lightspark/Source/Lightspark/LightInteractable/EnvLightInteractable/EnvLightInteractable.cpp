@@ -4,6 +4,7 @@
 #include "EnvLightInteractable.h"
 #include "LightsparkCharacter/PlayerCharacter.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
+#include "LightsparkGameMode.h"
 
 
 AEnvLightInteractable::AEnvLightInteractable() {
@@ -20,7 +21,9 @@ void AEnvLightInteractable::BeginPlay() {
 
 	if (resetState) this->CheckForCharacters();
 
-	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState) {
+	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState && !GameModeInstance->IsDoorOpen(segment)) {
 		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 }

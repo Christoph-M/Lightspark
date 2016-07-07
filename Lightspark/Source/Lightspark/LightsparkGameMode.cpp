@@ -82,6 +82,15 @@ void ALightsparkGameMode::CreateIndexList(TArray<FIndexListData> &IndexList, uin
 void ALightsparkGameMode::LoadActors() {
 	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
 
+
+	for (int i = 0; i < ActorLoadInstance->LevelSegments.Num(); ++i) {
+		DoorsOpen.Add(false);
+	}
+
+	for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
+		DoorsOpen[Entry.segment - 1] = Entry.doorOpen;
+	}
+
 	
 	this->LoadNPCsT<AFriendlyAiCharacter>(ActorLoadInstance->NPCs, ActorLoadInstance);
 	this->LoadNPCsT<AEnemyAiCharacter>(ActorLoadInstance->Enemies, ActorLoadInstance);
@@ -174,6 +183,19 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		UE_LOG(LogClass, Log, TEXT("Level Path: %s"), *LightpsarkSaveInstance->LevelName.ToString());
 
 
+		int i = 0;
+
+		for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ATriggeredActorSegmentDoor* Actor = *ActorItr;
+
+			LightpsarkSaveInstance->LevelSegments.Add(FLevelSegmentData());
+			LightpsarkSaveInstance->LevelSegments[i].segment = Actor->segment;
+			LightpsarkSaveInstance->LevelSegments[i].doorOpen = Actor->IsDoorOpen();
+
+			++i;
+		}
+
+
 		LightpsarkSaveInstance->Player.CharacterLocation = MyCharacter->GetActorLocation();
 		LightpsarkSaveInstance->Player.CharacterRotation = MyCharacter->GetActorRotation();
 
@@ -196,7 +218,7 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		/*this->SaveActors<APlayerLightInteractable>(LightpsarkSaveInstance->PlayerInteractables, PLAYER_INTERACTABLE);
 		this->SaveActors<ATriggeredActor>(LightpsarkSaveInstance->TriggeredActors, TRIGGERED_ACTOR);*/
 
-		int i = 0;
+		i = 0;
 
 		for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
 			ALightInteractable* Actor = *ActorItr;

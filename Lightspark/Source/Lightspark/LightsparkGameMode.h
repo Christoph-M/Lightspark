@@ -28,6 +28,8 @@ public:
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
+	bool IsDoorOpen(int segment) { return DoorsOpen[segment - 1]; }
+
 	void SaveGame(FString const &slotName = "DefaultSlot");
 
 	static class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
@@ -58,4 +60,6 @@ public:
 
 private:
 	ELightsparkPlayState CurrentState;
+
+	TArray<bool> DoorsOpen;
 };

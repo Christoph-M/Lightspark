@@ -30,7 +30,20 @@ public:
 	void Disable();
 
 protected:
+	FORCEINLINE class ATriggeredActorSegmentDoor* GetSegmentDoor() const { return SegmentDoor; }
+
+public:
+	/**
+	* Segment (int)
+	* The level segment this NPC belongs to.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Segment", meta = (AllowPrivateAccess = "true"))
+	int segment;
+
+protected:
 	uint32 id;
+
+	class ATriggeredActorSegmentDoor* SegmentDoor;
 
 	bool isEnabled;
 };
