@@ -7,6 +7,7 @@
 #include "LightsparkCharacter/LightsparkCharacter.h"
 #include "LightsparkGameMode.h"
 #include "IndexList.h"
+#include "LightsparkSaveGame.h"
 
 
 // Sets default values
@@ -32,13 +33,60 @@ ALightInteractable::ALightInteractable()
 void ALightInteractable::BeginPlay()
 {
 	Super::BeginPlay();
+
+	this->SetID();
+
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+
+	if (ActorLoadInstance) {
+		for (FActorSaveData Entry : ActorLoadInstance->PlayerInteractables) {
+			if (Entry.id == this->GetID()) {
+				this->SetActorLocation(Entry.ActorLocation);
+				this->SetActorRotation(Entry.ActorRotation);
+
+				switch (Entry.interactionState) {
+					case 0: this->ChangeState(EInteractionState::Default); break;
+					case 1: this->ChangeState(EInteractionState::Lit); break;
+					case 2: this->ChangeState(EInteractionState::Unlit); break;
+					case 3: this->ChangeState(EInteractionState::Destroyed); break;
+					case 4: this->ChangeState(EInteractionState::Unknown); break;
+				}
+
+				break;
+			}
+		}
+	}
 	
+
 	for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
 		ATriggeredActorSegmentDoor* Door = *ActorItr;
 
 		if (Door && !Door->IsPendingKill() && Door->segment == this->segment) {
 			SegmentDoor = Door;
-			
+
+			if (!SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &ALightInteractable::LightUp)) {
+				SegmentDoor->OnDoorOpened.AddDynamic(this, &ALightInteractable::LightUp);
+			}
+		}
+	}
+
+
+	/*ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	if (GameModeInstance && !GameModeInstance->OnGameModeBeginPlay.IsAlreadyBound(this, &ALightInteractable::MyBeginPlay)) {
+		GameModeInstance->OnGameModeBeginPlay.AddDynamic(this, &ALightInteractable::MyBeginPlay);
+	}*/
+}
+
+void ALightInteractable::MyBeginPlay() {
+	UE_LOG(LogClass, Warning, TEXT("%s"), *this->GetName());
+
+	for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		ATriggeredActorSegmentDoor* Door = *ActorItr;
+
+		if (Door && !Door->IsPendingKill() && Door->segment == this->segment) {
+			SegmentDoor = Door;
+
 			if (!SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &ALightInteractable::LightUp)) {
 				SegmentDoor->OnDoorOpened.AddDynamic(this, &ALightInteractable::LightUp);
 			}
@@ -47,7 +95,11 @@ void ALightInteractable::BeginPlay()
 }
 
 void ALightInteractable::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	
+	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	if (GameModeInstance && !GameModeInstance->OnGameModeBeginPlay.IsAlreadyBound(this, &ALightInteractable::MyBeginPlay)) {
+		GameModeInstance->OnGameModeBeginPlay.RemoveDynamic(this, &ALightInteractable::MyBeginPlay);
+	}
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -69,7 +121,7 @@ void ALightInteractable::SetID() {
 			}
 		}
 
-		UE_LOG(LogClass, Log, TEXT("LightInteractable ID: %d"), id);
+		UE_LOG(LogClass, Log, TEXT("LightInteractable ID: %d; %s"), id, *this->GetName());
 	} else {
 		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
 	}

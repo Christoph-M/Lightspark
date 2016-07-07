@@ -15,13 +15,30 @@ ATriggeredActorSegmentDoor::ATriggeredActorSegmentDoor() {
 void ATriggeredActorSegmentDoor::BeginPlay() {
 	Super::BeginPlay();
 
-	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
-
-	doorOpen = GameModeInstance->IsDoorOpen(segment);
-
 	for (int i = 0; i < SaveSpots.Num(); ++i) {
 		PlatesLitUp.Add(false);
 	}
+
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+
+	if (ActorLoadInstance) {
+		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
+			if (Entry.segment == this->segment) {
+				doorOpen = Entry.doorOpen;
+			}
+		}
+	}
+
+	this->Trigger(this);
+	if (doorOpen) this->ActivateDoor();
+}
+
+void ATriggeredActorSegmentDoor::MyBeginPlay() {
+	Super::MyBeginPlay();
+
+	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	doorOpen = GameModeInstance->IsDoorOpen(segment);
 
 	this->Trigger(this);
 	if (doorOpen) this->ActivateDoor();

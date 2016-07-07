@@ -132,7 +132,7 @@ void APlayerCharacter::BeginPlay() {
 
 	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
 	
-	if (PlayerLoadInstance) {
+	if (PlayerLoadInstance && FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
 		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);
 		SetActorRotation(PlayerLoadInstance->Player.CharacterRotation);
 

@@ -12,6 +12,25 @@ AFriendlyAiCharacter::AFriendlyAiCharacter() {
 	JumpEmpowerment = EJumpEmpowerment::None;
 }
 
+void AFriendlyAiCharacter::BeginPlay() {
+	Super::BeginPlay();
+
+	this->SetID();
+
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+
+	if (ActorLoadInstance) {
+		for (FNPCSaveData Entry : ActorLoadInstance->NPCs) {
+			if (Entry.id == this->GetID()) {
+				this->SetActorLocation(Entry.ActorLocation);
+				this->SetActorRotation(Entry.ActorRotation);
+
+				if (Entry.destroyed) this->Disable();
+			}
+		}
+	}
+}
+
 void AFriendlyAiCharacter::Merge_Implementation() {
 	this->Disable();
 }

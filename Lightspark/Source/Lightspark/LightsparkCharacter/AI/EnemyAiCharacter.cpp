@@ -20,6 +20,21 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 void AEnemyAiCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	this->SetID();
+
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+
+	if (ActorLoadInstance) {
+		for (FNPCSaveData Entry : ActorLoadInstance->Enemies) {
+			if (Entry.id == this->GetID()) {
+				this->SetActorLocation(Entry.ActorLocation);
+				this->SetActorRotation(Entry.ActorRotation);
+
+				if (Entry.destroyed) this->Disable();
+			}
+		}
+	}
+
 	for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
 		ATriggeredActorSegmentDoor* Door = *ActorItr;
 

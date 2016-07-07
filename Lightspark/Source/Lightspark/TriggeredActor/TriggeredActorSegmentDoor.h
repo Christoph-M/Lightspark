@@ -18,6 +18,8 @@ public:
 	ATriggeredActorSegmentDoor();
 
 	virtual void BeginPlay() override;
+	UFUNCTION()
+	virtual void MyBeginPlay() override;
 
 	virtual void Trigger_Implementation(class AActor* OtherActor) override;
 

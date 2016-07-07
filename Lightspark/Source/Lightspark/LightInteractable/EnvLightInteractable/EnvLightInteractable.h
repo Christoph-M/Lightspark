@@ -21,6 +21,8 @@ public:
 	FORCEINLINE USphereComponent* const GetSphere() { return InteractionSphere; }
 
 	virtual void BeginPlay() override;
+	UFUNCTION()
+	virtual void MyBeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 

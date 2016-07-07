@@ -5,6 +5,7 @@
 #include "LightsparkCharacter/PlayerCharacter.h"
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkGameMode.h"
+#include "LightsparkSaveGame.h"
 
 
 AEnvLightInteractable::AEnvLightInteractable() {
@@ -18,6 +19,29 @@ AEnvLightInteractable::AEnvLightInteractable() {
 
 void AEnvLightInteractable::BeginPlay() {
 	Super::BeginPlay();
+	
+	if (resetState) this->CheckForCharacters();
+
+
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+
+	bool isDoorOpen = false;
+
+	if (ActorLoadInstance) {
+		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
+			if (Entry.segment == this->segment) {
+				isDoorOpen = Entry.doorOpen;
+			}
+		}
+	}
+
+	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState && isDoorOpen) {
+		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
+	}
+}
+
+void AEnvLightInteractable::MyBeginPlay() {
+	Super::MyBeginPlay();
 
 	if (resetState) this->CheckForCharacters();
 
@@ -38,6 +62,8 @@ void AEnvLightInteractable::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 
 void AEnvLightInteractable::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
+
+
 }
 
 void AEnvLightInteractable::CheckForCharacters() {
@@ -52,7 +78,7 @@ void AEnvLightInteractable::CheckForCharacters() {
 
 	for (int i = 0; i < CollectedActors.Num(); ++i) {
 		APlayerCharacter* const TestPlayer = Cast<APlayerCharacter>(CollectedActors[i]);
-
+		
 		if (TestPlayer && !TestPlayer->IsPendingKill()) {
 			Player = TestPlayer;
 			break;

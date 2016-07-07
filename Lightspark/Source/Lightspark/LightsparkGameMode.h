@@ -3,6 +3,10 @@
 #include "GameFramework/GameMode.h"
 #include "LightsparkGameMode.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMyBeginPlay);
+
+
 UENUM(BlueprintType)
 enum class ELightsparkPlayState {
 	Playing,
@@ -28,12 +32,14 @@ public:
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
-	bool IsDoorOpen(int segment) { return DoorsOpen[segment - 1]; }
+	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
 
 	void SaveGame(FString const &slotName = "DefaultSlot");
 
 	static class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
 	static class UIndexList* LoadIndexList();
+
+	FMyBeginPlay OnGameModeBeginPlay;
 
 private:
 	void CreateIndexLists();
