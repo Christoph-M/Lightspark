@@ -30,6 +30,10 @@ ALightsparkGameMode::ALightsparkGameMode()
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 
+	for (int i = 0; i < 20; ++i) {
+		DoorsOpen.Add(false);
+	}
+
 	if (updateIndexList) {
 		this->CreateIndexLists();
 		updateIndexList = false;
@@ -83,39 +87,37 @@ void ALightsparkGameMode::LoadActors() {
 	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
 
 
-	for (int i = 0; i < ActorLoadInstance->LevelSegments.Num(); ++i) {
-		DoorsOpen.Add(false);
-	}
-
-	for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
-		DoorsOpen[Entry.segment - 1] = Entry.doorOpen;
-	}
-
-	
-	this->LoadNPCsT<AFriendlyAiCharacter>(ActorLoadInstance->NPCs, ActorLoadInstance);
-	this->LoadNPCsT<AEnemyAiCharacter>(ActorLoadInstance->Enemies, ActorLoadInstance);
-
-	/*this->LoadActorsT<APlayerLightInteractable>(ActorLoadInstance->PlayerInteractables, ActorLoadInstance);
-	this->LoadActorsT<ATriggeredActor>(ActorLoadInstance->TriggeredActors, ActorLoadInstance);*/
-
-	for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
-		ALightInteractable* Actor = *ActorItr;
-
-		Actor->SetID();
+	if (ActorLoadInstance) {
+		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
+			DoorsOpen[Entry.segment - 1] = Entry.doorOpen;
+		}
 
 
-		if (ActorLoadInstance) {
-			for (FActorSaveData Entry : ActorLoadInstance->PlayerInteractables) {
-				if (Entry.id == Actor->GetID()) {
-					Actor->SetActorLocation(Entry.ActorLocation);
-					Actor->SetActorRotation(Entry.ActorRotation);
+		this->LoadNPCsT<AFriendlyAiCharacter>(ActorLoadInstance->NPCs, ActorLoadInstance);
+		this->LoadNPCsT<AEnemyAiCharacter>(ActorLoadInstance->Enemies, ActorLoadInstance);
 
-					switch (Entry.interactionState) {
-						case 0: Actor->ChangeState(EInteractionState::Default); break;
-						case 1: Actor->ChangeState(EInteractionState::Lit); break;
-						case 2: Actor->ChangeState(EInteractionState::Unlit); break;
-						case 3: Actor->ChangeState(EInteractionState::Destroyed); break;
-						case 4: Actor->ChangeState(EInteractionState::Unknown); break;
+		/*this->LoadActorsT<APlayerLightInteractable>(ActorLoadInstance->PlayerInteractables, ActorLoadInstance);
+		this->LoadActorsT<ATriggeredActor>(ActorLoadInstance->TriggeredActors, ActorLoadInstance);*/
+
+		for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ALightInteractable* Actor = *ActorItr;
+
+			Actor->SetID();
+
+
+			if (ActorLoadInstance) {
+				for (FActorSaveData Entry : ActorLoadInstance->PlayerInteractables) {
+					if (Entry.id == Actor->GetID()) {
+						Actor->SetActorLocation(Entry.ActorLocation);
+						Actor->SetActorRotation(Entry.ActorRotation);
+
+						switch (Entry.interactionState) {
+							case 0: Actor->ChangeState(EInteractionState::Default); break;
+							case 1: Actor->ChangeState(EInteractionState::Lit); break;
+							case 2: Actor->ChangeState(EInteractionState::Unlit); break;
+							case 3: Actor->ChangeState(EInteractionState::Destroyed); break;
+							case 4: Actor->ChangeState(EInteractionState::Unknown); break;
+						}
 					}
 				}
 			}
