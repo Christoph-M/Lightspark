@@ -18,8 +18,10 @@ APlayerCharacter::APlayerCharacter() {
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 	
-	currentMaxEnergy = 100.0f;
+	currentMaxEnergy = 10.0f;
 	energyNeededForRune = 50.0f;
+	lightEnergyGain = 2.0f;
+	shadowEnergyDamage = 1.0f;
 	spendEnergyConsume = 25.0f;
 	consumeEnergyGain = 50.0f;
 
@@ -45,6 +47,14 @@ APlayerCharacter::APlayerCharacter() {
 	dashSpeed = 20.0f;
 	dashEnabledTime = 3.0f;
 
+	sneakLightRangeOffset = 5.0f;
+	sneakEnergy = 0.0f;
+	sneakOffset = 0.0f;
+	lightFlashRange = 5000.0f;
+	lightFlashTime = 0.0f;
+	initialAttenuationRadius = 0.0f;
+	lightFlashActive = false;
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -62,14 +72,16 @@ APlayerCharacter::APlayerCharacter() {
 	dashEnabled = false;
 	isDashing = false;
 	canDash = false;
+	isInShadow = true;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
 	minLightTemp = 1000.0f;
 	maxLightTemp = 12000.0f;
-	interactionRadiusFac = 1.0f;
+	minLightIntensity = 10.0f;
+	maxLightIntensity = 50.0f;
+	interactionRadiusFac = 0.5f;
 	lifeLightDecTime = 1.0f;
-	lifeLightNeedsUpdate = false;
 	lightColorFade = 0.0f;
 	lightColorOffsetFac = 0.4f;
 	lightColorOffset = 2500.0f;
@@ -150,6 +162,10 @@ void APlayerCharacter::BeginPlay() {
 	maxSprintSpeed = ((sprintSpeedFactor / 100.0f) * baseWalkSpeed) + baseWalkSpeed;
 
 	lightRangeFactor = (maxLightRange - minLightRange) / maxEnergy;
+	lightIntensityFactor = (maxLightIntensity - minLightIntensity) / maxEnergy;
+
+	lightFlashFadeInTime  = LightFlashFadeCurve->FloatCurve.Keys[1].Time - LightFlashFadeCurve->FloatCurve.Keys[0].Time;
+	lightFlashFadeOutTime = LightFlashFadeCurve->FloatCurve.Keys[2].Time - LightFlashFadeCurve->FloatCurve.Keys[1].Time;
 
 	this->InitLight();
 	
@@ -158,6 +174,14 @@ void APlayerCharacter::BeginPlay() {
 	}
 	if (!LandedDelegate.IsAlreadyBound(this, &APlayerCharacter::JumpLanded)) {
 		LandedDelegate.AddDynamic(this, &APlayerCharacter::JumpLanded);
+	}
+
+
+	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInLight)) {
+		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::CheckInLight);
+	}
+	if (!GetCapsuleComponent()->OnComponentEndOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInShadow)) {
+		GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::CheckInShadow);
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
@@ -171,6 +195,13 @@ void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 		LandedDelegate.RemoveDynamic(this, &APlayerCharacter::JumpLanded);
 	}
 
+	if (GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInLight)) {
+		GetCapsuleComponent()->OnComponentBeginOverlap.RemoveDynamic(this, &APlayerCharacter::CheckInLight);
+	}
+	if (GetCapsuleComponent()->OnComponentEndOverlap.IsAlreadyBound(this, &APlayerCharacter::CheckInShadow)) {
+		GetCapsuleComponent()->OnComponentEndOverlap.RemoveDynamic(this, &APlayerCharacter::CheckInShadow);
+	}
+
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 
 	Super::EndPlay(EndPlayReason);
@@ -182,15 +213,28 @@ void APlayerCharacter::Tick(float deltaTime) {
 	this->CheckMovementInput(deltaTime);
 	this->EvaluateMovementState(deltaTime);
 
-	if (CurrentLightUpdateState != ELightUpdateState::NoUpdate) this->UpdateLight(deltaTime);
+	if (!lightFlashActive) {
+		if (!bIsCrouched) {
+			if (isInShadow) {
+				this->UseEnergy(shadowEnergyDamage * deltaTime);
+			}
+			else  if (characterEnergy < maxEnergy) {
+				this->UseEnergy(-lightEnergyGain * deltaTime);
+			}
+		}
+
+		this->UpdateLight(deltaTime);
+	}
 }
 
 void APlayerCharacter::InitLight() {
-	lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+	//lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
 
 	LifeLight->AttenuationRadius = minLightRange + characterEnergy * lightRangeFactor;
-	LifeLight->Temperature = minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->Temperature = 8000.0f; //minLightTemp + characterEnergy * lightTempFactor;
+	LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
 	LifeLight->UpdateColorAndBrightness();
+	LifeLight->UpdateComponentToWorld();
 
 	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
 }
@@ -207,6 +251,11 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
 	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
+
+	InputComponent->BindAction("Sneak", IE_Pressed, this, &APlayerCharacter::StartSneak);
+	InputComponent->BindAction("Sneak", IE_Released, this, &APlayerCharacter::StopSneak);
+
+	InputComponent->BindAction("FlashOfLight", IE_Pressed, this, &APlayerCharacter::StartLightFlash);
 
 	InputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
 	InputComponent->BindAction("Spend", IE_Pressed, this, &APlayerCharacter::SpendEnergy);
@@ -340,6 +389,17 @@ void APlayerCharacter::MoveRight(float Value)
 }
 
 
+void APlayerCharacter::MyTakeDamage() {
+	if (characterEnergy <= 0.0f) {
+		/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
+		GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
+		characterEnergy = -0.1f;
+	} else {
+		this->UseEnergy(2.0f);
+	}
+}
+
+
 void APlayerCharacter::Interact() {
 	if (!isInteracting) {
 		TArray<AActor*> CollectedActors;
@@ -394,7 +454,7 @@ void APlayerCharacter::SpendEnergy() {
 
 		Flower->ChangeState(EInteractionState::Lit);
 
-		this->UseEnergy(spendEnergyConsume);
+		//this->UseEnergy(spendEnergyConsume);
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -408,8 +468,8 @@ void APlayerCharacter::ConsumeEnergy() {
 
 		Flower->ChangeState(EInteractionState::Destroyed);
 
-		this->ActivateLightUpdate();
-		characterEnergy += consumeEnergyGain;
+		/*this->ActivateLightUpdate();
+		characterEnergy += consumeEnergyGain;*/
 
 		isInteracting = false;
 		CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
@@ -538,8 +598,37 @@ void APlayerCharacter::StopSprinting() {
 }
 
 
+void APlayerCharacter::StartSneak() {
+	if (!lightFlashActive) {
+		Crouch();
+		sneakEnergy = characterEnergy;
+		this->UseEnergy(characterEnergy);
+		sneakOffset = sneakLightRangeOffset;
+	}
+}
+
+void APlayerCharacter::StopSneak() {
+	UnCrouch();
+	this->UseEnergy(-sneakEnergy);
+	sneakOffset = 0.0f;
+}
+
+
+void APlayerCharacter::StartLightFlash() {
+	lightFlashActive = true;
+	this->StopSneak();
+	characterEnergy = maxEnergy;
+	*maxWalkSpeed = maxSprintSpeed;
+	lightFlashTime = 0.0f;
+	initialAttenuationRadius = LifeLight->AttenuationRadius;
+	LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
+}
+
+
 void APlayerCharacter::CheckMovementInput(float deltaTime) {
-	if (GetVelocity().IsZero()) {
+	if (lightFlashActive) {
+		if (this->GetCurrentMovementState() != EMovementState::LightFlash)	this->SetCurrentMovementState(EMovementState::LightFlash);
+	} else if (GetVelocity().IsZero()) {
 		if (this->GetCurrentMovementState() != EMovementState::Default)		this->SetCurrentMovementState(EMovementState::Default);
 	} else if (isJumping && jumpTime == 0.0f) {
 		if (this->GetCurrentMovementState() != EMovementState::Jump)		this->SetCurrentMovementState(EMovementState::Jump);
@@ -578,15 +667,15 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 			this->Dash(); break;
 		case EMovementState::StopSprint:
 			this->Decelerate(deltaTime, maxWalkSpeed, baseWalkSpeed); break;
+		case EMovementState::LightFlash:
+			this->LightFlash(deltaTime); break;
 		default: UE_LOG(LogClass, Warning, TEXT("Movement State not set."));
 	}
 }
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	//if (characterEnergy > energyNeededForRune) {
-		this->UseEnergy(jumpEnergyConsume);
-	//}
+	this->UseEnergy(jumpEnergyConsume);
 
 	jumpTime += deltaTime;
 
@@ -604,9 +693,7 @@ void APlayerCharacter::DoubleJump(float deltaTime) {
 	CharacterMovement->MovementMode = EMovementMode::MOVE_Walking;
 	CharacterMovement->DoJump(false);
 
-	//if (characterEnergy > energyNeededForRune) {
-		this->UseEnergy(doubleJumpEnergyConsume);
-	//}
+	this->UseEnergy(doubleJumpEnergyConsume);
 
 	doubleJumped = true;
 	canDoubleJump = false;
@@ -623,9 +710,7 @@ void APlayerCharacter::Glide(float deltaTime) {
 }
 
 void APlayerCharacter::Sprint(float deltaTime) {
-	//if (characterEnergy > energyNeededForRune) {
-		this->UseEnergy(sprintEnergyConsume * deltaTime);
-	//}
+	//this->UseEnergy(sprintEnergyConsume * deltaTime);
 
 	if (sprintKeyHoldTime == 0.0f && isSprinting) {
 		*maxWalkSpeed = maxSprintSpeed;
@@ -662,83 +747,117 @@ void APlayerCharacter::Decelerate(float deltaTime, float* maxWalkSpeed, float ba
 	}
 }
 
+void APlayerCharacter::LightFlash(float deltaTime) {
+	lightFlashTime += deltaTime;
+
+	if (lightFlashTime >= LightFlashFadeCurve->FloatCurve.GetLastKey().Time) {
+		lightFlashTime = LightFlashFadeCurve->FloatCurve.GetLastKey().Time;
+		lightEnergy = maxEnergy;
+		lightFlashActive = false;
+	}
+
+	if (lightFlashTime <= lightFlashFadeInTime) {
+		LifeLight->AttenuationRadius = initialAttenuationRadius + LightFlashFadeCurve->GetFloatValue(lightFlashTime) * (lightFlashRange - initialAttenuationRadius);
+	} else if (lightFlashTime >= lightFlashFadeOutTime) {
+		float newRadius = minLightRange + characterEnergy * lightRangeFactor;
+		LifeLight->AttenuationRadius = newRadius + LightFlashFadeCurve->GetFloatValue(lightFlashTime) * (lightFlashRange - newRadius);
+	}
+
+	LifeLight->UpdateColorAndBrightness();
+	LifeLight->UpdateComponentToWorld();
+
+	GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * 0.5f);
+}
+
 void APlayerCharacter::UseEnergy(float amount) {
-	this->ActivateLightUpdate();
-	characterEnergy -= amount;
+	if (characterEnergy - amount > 0.0f || characterEnergy > 0.0f) {
+		this->ActivateLightUpdate();
+		characterEnergy -= amount;
+		if (characterEnergy <= 0.0f) characterEnergy = 0.0f;
+		if (characterEnergy >= maxEnergy) characterEnergy = maxEnergy;
+	}
 }
 
 void APlayerCharacter::ActivateLightUpdate() {
-	lightEnergy = characterEnergy;
-	CurrentLightUpdateState = ELightUpdateState::UpdateStart;
+	if (CurrentLightUpdateState == ELightUpdateState::NoUpdate) {
+		lightEnergy = characterEnergy;
+		CurrentLightUpdateState = ELightUpdateState::UpdateStart;
+	}
 }
 
 void APlayerCharacter::UpdateLight(float deltaTime) {
 	switch (CurrentLightUpdateState) {
-	case ELightUpdateState::UpdateStart:
-		if (lightEnergy == characterEnergy) { CurrentLightUpdateState = ELightUpdateState::UpdateEnd; break; }
+		case ELightUpdateState::NoUpdate: {
+			float intensityOffset = (sneakOffset > 0.0f) ? IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * ((maxEnergy - characterEnergy) / maxEnergy) : 1.0f;
+			LifeLight->Intensity = (lightIntensityFactor * lightEnergy + minLightIntensity - sneakOffset) * intensityOffset;
+			LifeLight->UpdateColorAndBrightness(); break; }
+		case ELightUpdateState::UpdateStart:
+			if (lightEnergy == characterEnergy) { CurrentLightUpdateState = ELightUpdateState::UpdateEnd; break; }
 
-		lightColorOffset = LifeLight->Temperature * lightColorOffsetFac;
+			lightColorOffset = LifeLight->Temperature * lightColorOffsetFac;
+			
+			if (lightEnergy > characterEnergy) {
+				CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeIn;
+			} else if (lightEnergy < characterEnergy) {
+				CurrentLightUpdateState = ELightUpdateState::UpdateIncFadeIn;
+			}
+
+			initialLightEnergy = lightEnergy; break;
+		case ELightUpdateState::UpdateDecFadeIn:
+			lightEnergy -= (initialLightEnergy - characterEnergy) / lifeLightDecTime * deltaTime;
+			lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
+
+			LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
+
+			if (lightColorFade <= -lightColorOffset) lightColorFade = -lightColorOffset;
+
+			if (lightEnergy <= characterEnergy) CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeOut; break;
+		case ELightUpdateState::UpdateIncFadeIn:
+			lightEnergy += (characterEnergy - initialLightEnergy) / lifeLightDecTime * deltaTime;
+			lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
+
+			if (lightColorFade >= lightColorOffset) lightColorFade = lightColorOffset;
 		
-		if (lightEnergy > characterEnergy) {
-			CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeIn;
-		} else if (lightEnergy < characterEnergy) {
-			CurrentLightUpdateState = ELightUpdateState::UpdateIncFadeIn;
-		}
+			if (lightEnergy >= characterEnergy) CurrentLightUpdateState = ELightUpdateState::UpdateIncFadeOut; break;
+		case ELightUpdateState::UpdateDecFadeOut:
+			lightEnergy = characterEnergy;
+			lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
 
-		initialLightEnergy = lightEnergy; break;
-	case ELightUpdateState::UpdateDecFadeIn:
-		lightEnergy -= (initialLightEnergy - characterEnergy) / lifeLightDecTime * deltaTime;
-		lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
+			LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
 
-		LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
+			if (lightColorFade >= 0.0f) {
+				LifeLight->Intensity = 50.0f;
+				lightColorFade = 0.0f;
+				CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
+			} break;
+		case ELightUpdateState::UpdateIncFadeOut:
+			lightEnergy = characterEnergy;
+			lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
 
-		if (lightColorFade <= -lightColorOffset) lightColorFade = -lightColorOffset;
-
-		if (lightEnergy <= characterEnergy) CurrentLightUpdateState = ELightUpdateState::UpdateDecFadeOut; break;
-	case ELightUpdateState::UpdateIncFadeIn:
-		lightEnergy += (characterEnergy - initialLightEnergy) / lifeLightDecTime * deltaTime;
-		lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
-
-		if (lightColorFade >= lightColorOffset) lightColorFade = lightColorOffset;
-		
-		if (lightEnergy >= characterEnergy) CurrentLightUpdateState = ELightUpdateState::UpdateIncFadeOut; break;
-	case ELightUpdateState::UpdateDecFadeOut:
-		lightEnergy = characterEnergy;
-		lightColorFade += lightColorOffset / lightColorFadeTime * deltaTime;
-
-		LifeLight->Intensity = FlickerCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime));
-
-		if (lightColorFade >= 0.0f) {
-			LifeLight->Intensity = 50.0f;
-			lightColorFade = 0.0f;
-			CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
-		} break;
-	case ELightUpdateState::UpdateIncFadeOut:
-		lightEnergy = characterEnergy;
-		lightColorFade -= lightColorOffset / lightColorFadeTime * deltaTime;
-
-		if (lightColorFade <= 0.0f) {
-			lightColorFade = 0.0f;
-			CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
-		} break;
-	case ELightUpdateState::UpdateEnd:
-		lightUpdateTime = 0.0f;
-		lifeLightNeedsUpdate = false;
-		this->InitLight(); break;
+			if (lightColorFade <= 0.0f) {
+				lightColorFade = 0.0f;
+				CurrentLightUpdateState = ELightUpdateState::UpdateEnd;
+			} break;
+		case ELightUpdateState::UpdateEnd:
+			lightUpdateTime = 0.0f;
+			this->InitLight(); 
+			CurrentLightUpdateState = ELightUpdateState::NoUpdate; break;
 	}
 
-	if (CurrentLightUpdateState != ELightUpdateState::UpdateEnd) {
-		lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
-
+	if (CurrentLightUpdateState != ELightUpdateState::UpdateEnd && CurrentLightUpdateState != ELightUpdateState::NoUpdate) {
+		//lightTempFactor = (maxLightTemp - minLightTemp) / currentMaxEnergy;
+		float intensityOffset = IntenstiyOffsetCurve->GetFloatValue(lightUpdateTime - floorf(lightUpdateTime)) * ((maxEnergy - characterEnergy) / maxEnergy);
+		
 		LifeLight->AttenuationRadius = minLightRange + lightEnergy * lightRangeFactor;
-		LifeLight->Temperature = minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
+		//LifeLight->Temperature = 8000.0f + lightColorFade; //minLightTemp + lightEnergy * lightTempFactor + lightColorFade;
+		LifeLight->Intensity = (maxLightIntensity * intensityOffset) + (lightIntensityFactor * lightEnergy + minLightIntensity);
 		LifeLight->UpdateColorAndBrightness();
 		LifeLight->UpdateComponentToWorld();
 
 		GetInteractionSphere()->SetSphereRadius(LifeLight->AttenuationRadius * interactionRadiusFac);
-		
-		lightUpdateTime += deltaTime;
 	}
+
+	lightUpdateTime += deltaTime;
 }
 
 void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
@@ -753,6 +872,37 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 
 		TestInteractable->CheckForCharacters();
 	}
+}
+
+void APlayerCharacter::CheckInLight(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
+	AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(OtherActor);
+
+	UE_LOG(LogClass, Warning, TEXT("PLAYER CompName: %s"), *OtherComp->GetName());
+
+	if (TestInteractable && !TestInteractable->IsPendingKill() && OtherComp->GetName() == TEXT("Sphere") && TestInteractable->GetCurrentState() != EInteractionState::Destroyed) {
+		UE_LOG(LogClass, Warning, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
+
+		isInShadow = false;
+	}
+}
+
+void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
+	TArray<AActor*> CollectedActors;
+	GetCapsuleComponent()->GetOverlappingActors(CollectedActors);
+
+	if (CollectedActors.Num() == 0) {
+		isInShadow = true; return;
+	}
+
+	for (int i = 0; i < CollectedActors.Num(); ++i) {
+		AEnvLightInteractable* const TestInteractable = Cast<AEnvLightInteractable>(CollectedActors[i]);
+
+		if (TestInteractable && !TestInteractable->IsPendingKill()) {
+			return;
+		}
+	}
+
+	isInShadow = true;
 }
 
 void APlayerCharacter::DisplayCurrentStates() {

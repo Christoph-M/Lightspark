@@ -22,14 +22,18 @@ ALightsparkGameMode::ALightsparkGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+
+	updateIndexList = false;
 }
 
 void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 	
-	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
+	
+	if (updateIndexList) {
 		this->CreateIndexLists();
-
+		updateIndexList = false;
+	} else if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
 		this->LoadActors();
 	}
 
@@ -41,7 +45,7 @@ void ALightsparkGameMode::Tick(float DeltaTime) {
 
 	APlayerCharacter* MyCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	if (MyCharacter) {
-		if (MyCharacter->GetCurrentCharacterEnergy() <= 0.0f) {
+		if (MyCharacter->GetCurrentCharacterEnergy() < 0.0f) {
 			this->SetCurrentPlayState(ELightsparkPlayState::GameOver);
 
 			UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));

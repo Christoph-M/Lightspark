@@ -16,7 +16,8 @@ enum class EMovementState {
 	Jump,
 	Jumping,
 	DoubleJump,
-	JumpGlide
+	JumpGlide,
+	LightFlash
 };
 
 UENUM(BlueprintType)
@@ -81,6 +82,7 @@ public:
 	FORCEINLINE class UPointLightComponent* GetLifeLight() const { return LifeLight; }
 
 	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
+	void MyTakeDamage();
 
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
@@ -141,6 +143,15 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StopSprinting();
 
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void StartSneak();
+
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void StopSneak();
+
+	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void StartLightFlash();
+
 	void CheckMovementInput(float deltaTime);
 
 	void EvaluateMovementState(float deltaTime);
@@ -161,6 +172,8 @@ protected:
 
 	void Decelerate(float deltaTime, float* maxWalkSpeed, float baseSpeed);
 
+	void LightFlash(float deltaTime);
+
 	void UseEnergy(float amount);
 
 	// APawn interface
@@ -169,6 +182,12 @@ protected:
 
 	UFUNCTION()
 	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;
+
+	UFUNCTION()
+	void CheckInLight(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+	void CheckInShadow(class AActor * OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UFUNCTION()
 	void TeleportToCheckpoint0();
@@ -233,6 +252,20 @@ protected:
 	float energyNeededForRune;
 
 	/**
+	* Light Energy Gain (float)
+	* Energy gained per second while the character is in range of a light source
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float lightEnergyGain;
+	
+	/**
+	* Shadow Energy Damage (float)
+	* Damage taken per second while the character is not in range of a light source
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float shadowEnergyDamage;
+
+	/**
 	* Spend Energy Consume (float)
 	* How much energy is taken from character when spending to a flower.
 	*/
@@ -276,6 +309,20 @@ protected:
 	float maxLightTemp;
 
 	/**
+	* Min Light Intensity (float)
+	* Minimum Life Light Intensity
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float minLightIntensity;
+
+	/**
+	* Max Light Intensity (float)
+	* Maximum Life Light Intensity
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float maxLightIntensity;
+
+	/**
 	* Interaction Radius Factor (float)
 	* Factor that determines the interaction radius based on Light Attenuation Radius
 	* (<1.0 = smaller than attenuation radius; >1.0 bigger than attenuation radius)
@@ -306,6 +353,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	UCurveFloat* FlickerCurve;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	UCurveFloat* IntenstiyOffsetCurve;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	UCurveFloat* LightFlashFadeCurve;
 
 
 	/**
@@ -393,6 +446,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Sprint", Meta = (BlueprintProtected = "true"))
 	float dashEnabledTime;
 
+	/**
+	* Sneak Light Range (float)
+	* Range offset applied to the life light when sneak ability is used
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Sneak", Meta = (BlueprintProtected = "true"))
+	float sneakLightRangeOffset;
+
+	/**
+	* Light Flash Range (float)
+	* Range of the life light when flash of light ability is used
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	float lightFlashRange;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
 	TArray<class AActor*> Checkpoints;
 
@@ -419,10 +486,10 @@ private:
 	float lightTempFactor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
-	float lightEnergy;
+	float lightIntensityFactor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
-	bool lifeLightNeedsUpdate;
+	float lightEnergy;
 
 	/**
 	* Light Color Offset (float)
@@ -537,6 +604,24 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	bool isDashing;
 
+
+	float sneakEnergy;
+
+	
+	float sneakOffset;
+
+
+	float lightFlashTime;
+
+	float lightFlashFadeInTime;
+
+	float lightFlashFadeOutTime;
+
+	float initialAttenuationRadius;
+
+	bool lightFlashActive;
+
+
 	float* maxWalkSpeed;
 
 	float lightColorFade, initialLightEnergy;
@@ -545,7 +630,7 @@ private:
 
 	FVector measureStart, measureEnd;
 
-	bool isInteracting, canSpend, canConsume;
+	bool isInteracting, canSpend, canConsume, isInShadow;
 
 	class AActor* interactedActor;
 };
