@@ -51,6 +51,7 @@ APlayerCharacter::APlayerCharacter() {
 	dashEnabledTime = 3.0f;
 
 	sneakLightRangeOffset = 5.0f;
+	isSneaking = false;
 	sneakEnergy = 0.0f;
 	sneakOffset = 0.0f;
 	lightFlashRange = 5000.0f;
@@ -536,7 +537,7 @@ void APlayerCharacter::Merge() {
 }
 
 void APlayerCharacter::Jump() {
-	if (!isInteracting) {
+	if (!isInteracting && !isSneaking) {
 		if (!isJumping) {
 			Super::Jump();
 
@@ -584,7 +585,7 @@ void APlayerCharacter::JumpLanded(const FHitResult& Hit) {
 
 
 void APlayerCharacter::StartSprinting() {
-	if (!isInteracting) {
+	if (!isInteracting && !isSneaking) {
 		if (GetSprintEmpowermentActive(SEmp_Dash)) {
 			if (dashEnabled) {
 				GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, this, &APlayerCharacter::DisableDash, dashEnabledTime);
@@ -616,7 +617,8 @@ void APlayerCharacter::StartSneak() {
 		sneakEnergy = characterEnergy;
 		this->UseEnergy(characterEnergy);
 		sneakOffset = sneakLightRangeOffset;
-		OnSneakToggle.Broadcast(true);
+		isSneaking = true;
+		OnSneakToggle.Broadcast(isSneaking);
 	}
 }
 
@@ -624,7 +626,8 @@ void APlayerCharacter::StopSneak() {
 	UnCrouch();
 	this->UseEnergy(-sneakEnergy);
 	sneakOffset = 0.0f;
-	OnSneakToggle.Broadcast(false);
+	isSneaking = false;
+	OnSneakToggle.Broadcast(isSneaking);
 }
 
 

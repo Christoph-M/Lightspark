@@ -617,6 +617,8 @@ private:
 	bool isDashing;
 
 
+	bool isSneaking;
+
 	float sneakEnergy;
 
 	
