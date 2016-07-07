@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Lightspark.h"
+#include "Kismet/GameplayStatics.h"
 #include "EnemyAiCharacter.h"
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "LightsparkCharacter/PlayerCharacter.h"
@@ -31,12 +32,22 @@ void AEnemyAiCharacter::BeginPlay() {
 		}
 	}
 
+	PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+
+	if (!PlayerCharacter->OnSneakToggle.IsAlreadyBound(this, &AEnemyAiCharacter::PlayerSneakToggle)) {
+		PlayerCharacter->OnSneakToggle.AddDynamic(this, &AEnemyAiCharacter::PlayerSneakToggle);
+	}
+
 	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
 		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::CheckPlayer);
 	}
 }
 
 void AEnemyAiCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	if (PlayerCharacter->OnSneakToggle.IsAlreadyBound(this, &AEnemyAiCharacter::PlayerSneakToggle)) {
+		PlayerCharacter->OnSneakToggle.RemoveDynamic(this, &AEnemyAiCharacter::PlayerSneakToggle);
+	}
+
 	if (GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
 		GetCapsuleComponent()->OnComponentBeginOverlap.RemoveDynamic(this, &AEnemyAiCharacter::CheckPlayer);
 	}
@@ -93,4 +104,8 @@ void AEnemyAiCharacter::DoorOpened(int32 segmentt) {
 	if (SegmentDoor->OnDoorOpened.IsAlreadyBound(this, &AEnemyAiCharacter::DoorOpened)) {
 		SegmentDoor->OnDoorOpened.RemoveDynamic(this, &AEnemyAiCharacter::DoorOpened);
 	}
+}
+
+void AEnemyAiCharacter::PlayerSneakToggle(bool isSneaking) {
+	UE_LOG(LogClass, Log, TEXT("Player sneak: %d"), isSneaking);
 }

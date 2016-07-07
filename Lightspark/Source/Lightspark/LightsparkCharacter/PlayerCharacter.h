@@ -5,6 +5,8 @@
 #include "LightsparkCharacter.h"
 #include "PlayerCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerSneakDelegate, bool, isSneaking);
+
 
 UENUM(BlueprintType)
 enum class EMovementState {
@@ -102,6 +104,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
 	virtual void StopJumping() override;
+
+	UPROPERTY(BlueprintAssignable)
+	FPlayerSneakDelegate OnSneakToggle;
 
 protected:
 	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }

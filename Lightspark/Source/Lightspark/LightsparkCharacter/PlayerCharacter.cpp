@@ -616,6 +616,7 @@ void APlayerCharacter::StartSneak() {
 		sneakEnergy = characterEnergy;
 		this->UseEnergy(characterEnergy);
 		sneakOffset = sneakLightRangeOffset;
+		OnSneakToggle.Broadcast(true);
 	}
 }
 
@@ -623,6 +624,7 @@ void APlayerCharacter::StopSneak() {
 	UnCrouch();
 	this->UseEnergy(-sneakEnergy);
 	sneakOffset = 0.0f;
+	OnSneakToggle.Broadcast(false);
 }
 
 
