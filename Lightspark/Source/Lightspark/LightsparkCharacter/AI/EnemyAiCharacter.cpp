@@ -63,6 +63,12 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 		TestPlayer->MyTakeDamage();
 		this->Disable();
 	}
+
+	AEnvLightInteractable* const TestActor = Cast<AEnvLightInteractable>(OtherActor);
+
+	if (TestActor && !TestActor->IsPendingKill()) {
+		this->Disable();
+	}
 }
 
 void AEnemyAiCharacter::SetID() {
