@@ -5,6 +5,8 @@
 #include "LightsparkCharacter.h"
 #include "PlayerCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerSneakDelegate, bool, isSneaking);
+
 
 UENUM(BlueprintType)
 enum class EMovementState {
@@ -102,6 +104,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character")
 	virtual void StopJumping() override;
+
+	UPROPERTY(BlueprintAssignable)
+	FPlayerSneakDelegate OnSneakToggle;
 
 protected:
 	void SetSprintEmpowermentActive(int i, bool active) { SprintEmpowermentActive[i] = active; }
@@ -257,6 +262,13 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
 	float lightEnergyGain;
+
+	/**
+	* Hit Energy Damage (flaot)
+	* Energy damage taken on enemy contact with life light
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Energy", Meta = (BlueprintProtected = "true"))
+	float hitEnergyDamage;
 	
 	/**
 	* Shadow Energy Damage (float)
@@ -604,6 +616,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (AllowPrivateAccess = "true"))
 	bool isDashing;
 
+
+	bool isSneaking;
 
 	float sneakEnergy;
 

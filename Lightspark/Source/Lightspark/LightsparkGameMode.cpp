@@ -10,6 +10,7 @@
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightInteractable/PlayerLightInteractable/PlayerLightInteractable.h"
 #include "TriggeredActor/TriggeredActor.h"
+#include "TriggeredActor/TriggeredActorSegmentDoor.h"
 #include "IndexList.h"
 #include "LightsparkSaveGame.h"
 
@@ -23,6 +24,10 @@ ALightsparkGameMode::ALightsparkGameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 
+	for (int i = 0; i < 20; ++i) {
+		DoorsOpen.Add(false);
+	}
+
 	updateIndexList = false;
 }
 
@@ -30,14 +35,19 @@ void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 	
 	
-	if (updateIndexList) {
-		this->CreateIndexLists();
-		updateIndexList = false;
-	} else if (FString(*UGameplayStatics::GetCurrentLevelName(this)) == TEXT("04_asset_pass")) {
-		this->LoadActors();
+	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
+		if (updateIndexList) {
+			this->CreateIndexLists();
+			updateIndexList = false;
+		} /*else {
+			UE_LOG(LogClass, Warning, TEXT("HELLO"));
+			this->LoadActors();
+		}*/
 	}
 
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
+	/*UE_LOG(LogClass, Warning, TEXT("Broadcast"));
+	OnGameModeBeginPlay.Broadcast();*/
 }
 
 void ALightsparkGameMode::Tick(float DeltaTime) {
@@ -58,7 +68,7 @@ void ALightsparkGameMode::CreateIndexLists() {
 
 		this->CreateIndexList<AFriendlyAiCharacter>     (IndexListInstance->NPCIndexList,                FRIENDLY_AI);
 		this->CreateIndexList<AEnemyAiCharacter>        (IndexListInstance->EnemyIndexList,              ENEMY_AI);
-		this->CreateIndexList<APlayerLightInteractable> (IndexListInstance->PlayerInteractableIndexList, PLAYER_INTERACTABLE);
+		this->CreateIndexList<ALightInteractable>		(IndexListInstance->InteractableIndexList,		 INTERACTABLE);
 		this->CreateIndexList<ATriggeredActor>          (IndexListInstance->TriggeredActorIndexList,     TRIGGERED_ACTOR);
 
 	UGameplayStatics::SaveGameToSlot(IndexListInstance, IndexListInstance->SaveSlotName, IndexListInstance->UserIndex);
@@ -82,15 +92,21 @@ void ALightsparkGameMode::CreateIndexList(TArray<FIndexListData> &IndexList, uin
 void ALightsparkGameMode::LoadActors() {
 	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
 
-	
+	if (ActorLoadInstance) {
+		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
+			DoorsOpen[Entry.segment - 1] = Entry.doorOpen;
+		}
+	}
+
+
 	this->LoadNPCsT<AFriendlyAiCharacter>(ActorLoadInstance->NPCs, ActorLoadInstance);
 	this->LoadNPCsT<AEnemyAiCharacter>(ActorLoadInstance->Enemies, ActorLoadInstance);
 
 	/*this->LoadActorsT<APlayerLightInteractable>(ActorLoadInstance->PlayerInteractables, ActorLoadInstance);
 	this->LoadActorsT<ATriggeredActor>(ActorLoadInstance->TriggeredActors, ActorLoadInstance);*/
 
-	for (TActorIterator<APlayerLightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
-		APlayerLightInteractable* Actor = *ActorItr;
+	for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		ALightInteractable* Actor = *ActorItr;
 
 		Actor->SetID();
 
@@ -174,6 +190,19 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		UE_LOG(LogClass, Log, TEXT("Level Path: %s"), *LightpsarkSaveInstance->LevelName.ToString());
 
 
+		int i = 0;
+
+		for (TActorIterator<ATriggeredActorSegmentDoor> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ATriggeredActorSegmentDoor* Actor = *ActorItr;
+
+			LightpsarkSaveInstance->LevelSegments.Add(FLevelSegmentData());
+			LightpsarkSaveInstance->LevelSegments[i].segment = Actor->segment;
+			LightpsarkSaveInstance->LevelSegments[i].doorOpen = Actor->IsDoorOpen();
+
+			++i;
+		}
+
+
 		LightpsarkSaveInstance->Player.CharacterLocation = MyCharacter->GetActorLocation();
 		LightpsarkSaveInstance->Player.CharacterRotation = MyCharacter->GetActorRotation();
 
@@ -196,10 +225,10 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		/*this->SaveActors<APlayerLightInteractable>(LightpsarkSaveInstance->PlayerInteractables, PLAYER_INTERACTABLE);
 		this->SaveActors<ATriggeredActor>(LightpsarkSaveInstance->TriggeredActors, TRIGGERED_ACTOR);*/
 
-		int i = 0;
+		i = 0;
 
-		for (TActorIterator<APlayerLightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
-			APlayerLightInteractable* Actor = *ActorItr;
+		for (TActorIterator<ALightInteractable> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ALightInteractable* Actor = *ActorItr;
 
 			LightpsarkSaveInstance->PlayerInteractables.Add(FActorSaveData());
 			LightpsarkSaveInstance->PlayerInteractables[i].id = Actor->GetID();
