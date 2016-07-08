@@ -224,6 +224,9 @@ protected:
 	UFUNCTION()
 		void TeleportToCheckpoint9();
 
+	UFUNCTION()
+	void ToggleEnergyLoss();
+
 private:
 	UFUNCTION()
 	void JumpApex();
