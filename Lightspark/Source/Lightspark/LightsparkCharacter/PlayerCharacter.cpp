@@ -772,6 +772,7 @@ void APlayerCharacter::LightFlash(float deltaTime) {
 	if (lightFlashTime >= LightFlashFadeCurve->FloatCurve.GetLastKey().Time) {
 		lightFlashTime = LightFlashFadeCurve->FloatCurve.GetLastKey().Time;
 		lightEnergy = maxEnergy;
+		CurrentLightUpdateState = ELightUpdateState::NoUpdate;
 		lightFlashActive = false;
 	}
 
