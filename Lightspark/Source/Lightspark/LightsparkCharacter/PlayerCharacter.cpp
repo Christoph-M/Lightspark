@@ -130,7 +130,7 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement = GetCharacterMovement();
 
-	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 	
 	if (PlayerLoadInstance && FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
 		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);
@@ -780,6 +780,7 @@ void APlayerCharacter::LightFlash(float deltaTime) {
 	if (lightFlashTime >= LightFlashFadeCurve->FloatCurve.GetLastKey().Time) {
 		lightFlashTime = LightFlashFadeCurve->FloatCurve.GetLastKey().Time;
 		lightEnergy = maxEnergy;
+		CurrentLightUpdateState = ELightUpdateState::NoUpdate;
 		lightFlashActive = false;
 	}
 

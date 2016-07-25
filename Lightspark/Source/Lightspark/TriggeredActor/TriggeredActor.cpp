@@ -60,16 +60,19 @@ void ATriggeredActor::Trigger_Implementation(AActor* OtherActor) {
 }
 
 void ATriggeredActor::SetID() {
-	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 
-	if (IndexListInstance) {
-		for (FIndexListData Entry : IndexListInstance->TriggeredActorIndexList) {
-			if (this->GetActorLocation() == Entry.ActorLocation) {
-				id = Entry.id;
-			}
-		}
-	} else {
+	if (!IndexListInstance) {
 		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+		Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->CreateIndexLists();
+		UE_LOG(LogClass, Log, TEXT("IndexList created."));
+		IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
+	}
+
+	for (FIndexListData Entry : IndexListInstance->TriggeredActorIndexList) {
+		if (this->GetActorLocation() == Entry.ActorLocation) {
+			id = Entry.id;
+		}
 	}
 
 	UE_LOG(LogClass, Log, TEXT("TriggeredActor ID: %d"), id);

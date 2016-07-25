@@ -17,7 +17,7 @@ void AFriendlyAiCharacter::BeginPlay() {
 
 	this->SetID();
 
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 
 	if (ActorLoadInstance) {
 		for (FNPCSaveData Entry : ActorLoadInstance->NPCs) {
@@ -36,16 +36,19 @@ void AFriendlyAiCharacter::Merge_Implementation() {
 }
 
 void AFriendlyAiCharacter::SetID() {
-	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 
-	if (IndexListInstance) {
-		for (FIndexListData Entry : IndexListInstance->NPCIndexList) {
-			if (this->GetActorLocation() == Entry.ActorLocation) {
-				id = Entry.id;
-			}
-		}
-	} else {
+	if (!IndexListInstance) {
 		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+		Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->CreateIndexLists();
+		UE_LOG(LogClass, Log, TEXT("IndexList created."));
+		IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
+	}
+
+	for (FIndexListData Entry : IndexListInstance->NPCIndexList) {
+		if (this->GetActorLocation() == Entry.ActorLocation) {
+			id = Entry.id;
+		}
 	}
 
 	UE_LOG(LogClass, Log, TEXT("NPC ID: %d"), id);

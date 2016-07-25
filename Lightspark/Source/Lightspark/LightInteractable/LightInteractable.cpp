@@ -36,7 +36,7 @@ void ALightInteractable::BeginPlay()
 
 	this->SetID();
 
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 
 	if (ActorLoadInstance) {
 		for (FActorSaveData Entry : ActorLoadInstance->PlayerInteractables) {
@@ -112,19 +112,22 @@ void ALightInteractable::Tick( float DeltaTime )
 }
 
 void ALightInteractable::SetID() {
-	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 	
-	if (IndexListInstance) {
-		for (FIndexListData Entry : IndexListInstance->InteractableIndexList) {
-			if (this->GetActorLocation() == Entry.ActorLocation) {
-				id = Entry.id;
-			}
-		}
-
-		UE_LOG(LogClass, Log, TEXT("LightInteractable ID: %d; %s"), id, *this->GetName());
-	} else {
+	if (!IndexListInstance) {
 		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
+		Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->CreateIndexLists();
+		UE_LOG(LogClass, Log, TEXT("IndexList created."));
+		IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 	}
+
+	for (FIndexListData Entry : IndexListInstance->InteractableIndexList) {
+		if (this->GetActorLocation() == Entry.ActorLocation) {
+			id = Entry.id;
+		}
+	}
+
+	UE_LOG(LogClass, Log, TEXT("LightInteractable ID: %d; %s"), id, *this->GetName());
 }
 
 void ALightInteractable::ChangeState(EInteractionState newState) {
