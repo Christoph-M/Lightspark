@@ -27,8 +27,6 @@ ALightsparkGameMode::ALightsparkGameMode()
 	for (int i = 0; i < 20; ++i) {
 		DoorsOpen.Add(false);
 	}
-
-	updateIndexList = false;
 }
 
 void ALightsparkGameMode::BeginPlay() {
@@ -36,9 +34,9 @@ void ALightsparkGameMode::BeginPlay() {
 	
 	
 	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
-		if (updateIndexList) {
+		if (!ALightsparkGameMode::LoadIndexList()) {
 			this->CreateIndexLists();
-			updateIndexList = false;
+			UE_LOG(LogClass, Log, TEXT("IndexList created."));
 		} /*else {
 			UE_LOG(LogClass, Warning, TEXT("HELLO"));
 			this->LoadActors();
