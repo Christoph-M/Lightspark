@@ -130,7 +130,7 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement = GetCharacterMovement();
 
-	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 	
 	if (PlayerLoadInstance && FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
 		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);

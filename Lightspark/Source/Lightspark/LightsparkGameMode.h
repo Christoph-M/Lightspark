@@ -28,6 +28,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintPure, Category = "Lightspark")
+
 	ELightsparkPlayState GetCurrentPlayState() const { return CurrentState; }
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
@@ -35,15 +36,14 @@ public:
 	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
 
 	void SaveGame(FString const &slotName = "DefaultSlot");
+	void CreateIndexLists();
 
-	static class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
-	static class UIndexList* LoadIndexList();
+	static class ULightsparkSaveGame* LoadGame(ALightsparkGameMode*, FString const &slotName = "DefaultSlot");
+	static class UIndexList* LoadIndexList(ALightsparkGameMode*);
 
 	FMyBeginPlay OnGameModeBeginPlay;
 
 private:
-	void CreateIndexLists();
-
 	template <typename ActorType>
 	FORCEINLINE void CreateIndexList(TArray<struct FIndexListData> &IndexList, uint32 range);
 

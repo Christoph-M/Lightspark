@@ -34,7 +34,7 @@ void ALightsparkGameMode::BeginPlay() {
 	
 	
 	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
-		if (!ALightsparkGameMode::LoadIndexList()) {
+		if (!ALightsparkGameMode::LoadIndexList(this)) {
 			this->CreateIndexLists();
 			UE_LOG(LogClass, Log, TEXT("IndexList created."));
 		} /*else {
@@ -69,7 +69,7 @@ void ALightsparkGameMode::CreateIndexLists() {
 		this->CreateIndexList<ALightInteractable>		(IndexListInstance->InteractableIndexList,		 INTERACTABLE);
 		this->CreateIndexList<ATriggeredActor>          (IndexListInstance->TriggeredActorIndexList,     TRIGGERED_ACTOR);
 
-	UGameplayStatics::SaveGameToSlot(IndexListInstance, IndexListInstance->SaveSlotName, IndexListInstance->UserIndex);
+	UGameplayStatics::SaveGameToSlot(IndexListInstance, IndexListInstance->SaveSlotName + "_" + *UGameplayStatics::GetCurrentLevelName(this), IndexListInstance->UserIndex);
 }
 
 template <typename ActorType>
@@ -88,7 +88,7 @@ void ALightsparkGameMode::CreateIndexList(TArray<FIndexListData> &IndexList, uin
 }
 
 void ALightsparkGameMode::LoadActors() {
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(this);
 
 	if (ActorLoadInstance) {
 		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
@@ -244,7 +244,7 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 			++i;
 		}
 
-	UGameplayStatics::SaveGameToSlot(LightpsarkSaveInstance, LightpsarkSaveInstance->SaveSlotName, LightpsarkSaveInstance->UserIndex);
+	UGameplayStatics::SaveGameToSlot(LightpsarkSaveInstance, LightpsarkSaveInstance->SaveSlotName + "_" + UGameplayStatics::GetCurrentLevelName(this), LightpsarkSaveInstance->UserIndex);
 }
 
 template <typename ActorType>
@@ -285,10 +285,10 @@ void ALightsparkGameMode::SaveActors(TArray<FActorSaveData> &SaveDataList, uint3
 	}
 }
 
-UIndexList* ALightsparkGameMode::LoadIndexList() {
-	return Cast<UIndexList>(UGameplayStatics::LoadGameFromSlot(TEXT("IndexList"), 0));
+UIndexList* ALightsparkGameMode::LoadIndexList(ALightsparkGameMode* gameMode) {
+	return Cast<UIndexList>(UGameplayStatics::LoadGameFromSlot(TEXT("IndexList_") + UGameplayStatics::GetCurrentLevelName(gameMode), 0));
 }
 
-ULightsparkSaveGame* ALightsparkGameMode::LoadGame(FString const &slotName) {
-	return Cast<ULightsparkSaveGame>(UGameplayStatics::LoadGameFromSlot(slotName, 0));
+ULightsparkSaveGame* ALightsparkGameMode::LoadGame(ALightsparkGameMode* gameMode, FString const &slotName) {
+	return Cast<ULightsparkSaveGame>(UGameplayStatics::LoadGameFromSlot(slotName + "_" + UGameplayStatics::GetCurrentLevelName(gameMode), 0));
 }

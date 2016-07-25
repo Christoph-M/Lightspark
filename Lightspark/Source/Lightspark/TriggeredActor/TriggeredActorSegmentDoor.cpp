@@ -19,7 +19,7 @@ void ATriggeredActorSegmentDoor::BeginPlay() {
 		PlatesLitUp.Add(false);
 	}
 
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
 
 	if (ActorLoadInstance) {
 		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
