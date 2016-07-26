@@ -22,7 +22,7 @@ void AEnemyAiCharacter::BeginPlay() {
 
 	this->SetID();
 
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
+	ULightsparkSaveGame* ActorLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->GetGameSave();
 
 	if (ActorLoadInstance) {
 		for (FNPCSaveData Entry : ActorLoadInstance->Enemies) {
@@ -98,14 +98,8 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 }
 
 void AEnemyAiCharacter::SetID() {
-	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
-
-	if (!IndexListInstance) {
-		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
-		Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->CreateIndexLists();
-		UE_LOG(LogClass, Log, TEXT("IndexList created."));
-		IndexListInstance = ALightsparkGameMode::LoadIndexList(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
-	}
+	ALightsparkGameMode* GameMode = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+	UIndexList* IndexListInstance = GameMode->LoadIndexList();
 
 	for (FIndexListData Entry : IndexListInstance->EnemyIndexList) {
 		if (this->GetActorLocation() == Entry.ActorLocation) {

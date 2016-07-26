@@ -23,7 +23,7 @@ void AEnvLightInteractable::BeginPlay() {
 	if (resetState) this->CheckForCharacters();
 
 
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode()));
+	ULightsparkSaveGame* ActorLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
 
 	bool isDoorOpen = false;
 

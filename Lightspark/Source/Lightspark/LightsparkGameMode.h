@@ -36,14 +36,17 @@ public:
 	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
 
 	void SaveGame(FString const &slotName = "DefaultSlot");
-	void CreateIndexLists();
 
-	static class ULightsparkSaveGame* LoadGame(ALightsparkGameMode*, FString const &slotName = "DefaultSlot");
-	static class UIndexList* LoadIndexList(ALightsparkGameMode*);
+	class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
+	class UIndexList* LoadIndexList();
+
+	class ULightsparkSaveGame* GetGameSave() { return GameSave; }
 
 	FMyBeginPlay OnGameModeBeginPlay;
 
 private:
+	void CreateIndexLists();
+
 	template <typename ActorType>
 	FORCEINLINE void CreateIndexList(TArray<struct FIndexListData> &IndexList, uint32 range);
 
@@ -63,6 +66,9 @@ private:
 
 private:
 	ELightsparkPlayState CurrentState;
+
+	ULightsparkSaveGame* GameSave;
+	UIndexList* IndexList;
 
 	TArray<bool> DoorsOpen;
 };

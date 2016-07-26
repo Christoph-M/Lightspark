@@ -24,6 +24,9 @@ ALightsparkGameMode::ALightsparkGameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 
+	GameSave = nullptr;
+	IndexList = nullptr;
+
 	for (int i = 0; i < 20; ++i) {
 		DoorsOpen.Add(false);
 	}
@@ -33,15 +36,7 @@ void ALightsparkGameMode::BeginPlay() {
 	Super::BeginPlay();
 	
 	
-	if (FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
-		if (!ALightsparkGameMode::LoadIndexList(this)) {
-			this->CreateIndexLists();
-			UE_LOG(LogClass, Log, TEXT("IndexList created."));
-		} /*else {
-			UE_LOG(LogClass, Warning, TEXT("HELLO"));
-			this->LoadActors();
-		}*/
-	}
+	if (!IndexList) this->LoadIndexList();
 
 	this->SetCurrentPlayState(ELightsparkPlayState::Playing);
 	/*UE_LOG(LogClass, Warning, TEXT("Broadcast"));
@@ -88,7 +83,7 @@ void ALightsparkGameMode::CreateIndexList(TArray<FIndexListData> &IndexList, uin
 }
 
 void ALightsparkGameMode::LoadActors() {
-	ULightsparkSaveGame* ActorLoadInstance = ALightsparkGameMode::LoadGame(this);
+	ULightsparkSaveGame* ActorLoadInstance = this->LoadGame();
 
 	if (ActorLoadInstance) {
 		for (FLevelSegmentData Entry : ActorLoadInstance->LevelSegments) {
@@ -285,10 +280,24 @@ void ALightsparkGameMode::SaveActors(TArray<FActorSaveData> &SaveDataList, uint3
 	}
 }
 
-UIndexList* ALightsparkGameMode::LoadIndexList(ALightsparkGameMode* gameMode) {
-	return Cast<UIndexList>(UGameplayStatics::LoadGameFromSlot(TEXT("IndexList_") + UGameplayStatics::GetCurrentLevelName(gameMode), 0));
+UIndexList* ALightsparkGameMode::LoadIndexList() {
+	if (IndexList) return IndexList;
+
+	IndexList = Cast<UIndexList>(UGameplayStatics::LoadGameFromSlot(TEXT("IndexList_") + UGameplayStatics::GetCurrentLevelName(this), 0));
+
+	if (!IndexList) {
+		this->CreateIndexLists();
+		UE_LOG(LogClass, Log, TEXT("IndexList created."));
+		IndexList = Cast<UIndexList>(UGameplayStatics::LoadGameFromSlot(TEXT("IndexList_") + UGameplayStatics::GetCurrentLevelName(this), 0));
+	}
+
+	return IndexList;
 }
 
-ULightsparkSaveGame* ALightsparkGameMode::LoadGame(ALightsparkGameMode* gameMode, FString const &slotName) {
-	return Cast<ULightsparkSaveGame>(UGameplayStatics::LoadGameFromSlot(slotName + "_" + UGameplayStatics::GetCurrentLevelName(gameMode), 0));
+ULightsparkSaveGame* ALightsparkGameMode::LoadGame(FString const &slotName) {
+	if (GameSave) return GameSave;
+
+	GameSave = Cast<ULightsparkSaveGame>(UGameplayStatics::LoadGameFromSlot(slotName + "_" + UGameplayStatics::GetCurrentLevelName(this), 0));
+
+	return GameSave;
 }
