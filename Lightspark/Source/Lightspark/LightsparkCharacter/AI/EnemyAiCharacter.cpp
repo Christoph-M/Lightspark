@@ -7,12 +7,24 @@
 #include "LightsparkGameMode.h"
 #include "IndexList.h"
 #include "LightsparkSaveGame.h"
+#include "Perception/PawnSensingComponent.h"
 
 
 AEnemyAiCharacter::AEnemyAiCharacter() {
 	GetCapsuleComponent()->ComponentTags.Add(TEXT("Enemy"));
 
 	GetInteractionSphere()->ComponentTags.Add(TEXT("Dark"));
+
+	EnemyInSight = false;
+	//AIControllerClass = AAICont_Tut::StaticClass();
+	PawnSensor = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("Sensing"));
+}
+
+void AEnemyAiCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	PawnSensor->SensingInterval = 0.5f;
+	PawnSensor->OnSeePawn.AddDynamic(this, &AEnemyAiCharacter::OnSeePawn);
 }
 
 void AEnemyAiCharacter::BeginPlay() {
@@ -29,6 +41,24 @@ void AEnemyAiCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void AEnemyAiCharacter::OnSeePawn(APawn * OtherCharacter)
+{
+	//AAICont_Tut AICont;
+
+	if (OtherCharacter->IsPlayerControlled())
+	{
+		//AICont.SetEnemyInSight(true);
+		//AICont.SetEnemy(OtherCharacter);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("See Player"));
+	}
+	else
+	{
+		//AICont.SetEnemyInSight(false);
+		//AICont.SetEnemy(NULL);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("See something else"));
+	}
 }
 
 void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {

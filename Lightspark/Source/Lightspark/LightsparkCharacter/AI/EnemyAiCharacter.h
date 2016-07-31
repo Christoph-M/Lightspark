@@ -16,8 +16,17 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void PostInitializeComponents() override;
 
 	void SetID();
+
+	UPROPERTY(EditAnywhere, Category = Behavior)
+		class UBehaviorTree* Behavior;
+
+	UPROPERTY(EditAnywhere, Category = Sensing)
+		class UPawnSensingComponent* PawnSensor;
+
+	bool IsEnemyInSight() { return EnemyInSight; };
 
 private:
 	UFUNCTION()
@@ -25,4 +34,9 @@ private:
 
 	UFUNCTION()
 	void CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+	void OnSeePawn(APawn* OtherCharacter);
+
+	bool EnemyInSight;
 };
