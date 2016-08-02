@@ -29,6 +29,12 @@ struct FPlayerSaveData {
 
 
 	UPROPERTY()
+	int currentSegment;
+
+	UPROPERTY()
+	bool segmentLit;
+
+	UPROPERTY()
 	float currentMaxEnergy;
 
 	UPROPERTY()

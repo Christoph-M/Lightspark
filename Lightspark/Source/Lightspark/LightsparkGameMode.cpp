@@ -191,7 +191,6 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 			LightpsarkSaveInstance->LevelSegments.Add(FLevelSegmentData());
 			LightpsarkSaveInstance->LevelSegments[i].segment = Actor->segment;
 			LightpsarkSaveInstance->LevelSegments[i].doorOpen = Actor->IsDoorOpen();
-			DoorsOpen[i] = Actor->IsDoorOpen();
 
 			++i;
 		}
@@ -204,6 +203,8 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		LightpsarkSaveInstance->Player.CameraLocation = MyCharacter->GetFollowCamera()->RelativeLocation;
 		LightpsarkSaveInstance->Player.CameraRotation = MyCharacter->GetFollowCamera()->RelativeRotation;
 
+		LightpsarkSaveInstance->Player.currentSegment = MyCharacter->GetCurrentSegment();
+		LightpsarkSaveInstance->Player.segmentLit = DoorsOpen[MyCharacter->GetCurrentSegment() - 1];
 		LightpsarkSaveInstance->Player.currentMaxEnergy = MyCharacter->GetCurrentMaxEnergy();
 		LightpsarkSaveInstance->Player.characterEnergy = MyCharacter->GetCurrentCharacterEnergy();
 

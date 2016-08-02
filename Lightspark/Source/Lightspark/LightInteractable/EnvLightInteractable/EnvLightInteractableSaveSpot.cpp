@@ -16,7 +16,7 @@ void AEnvLightInteractableSaveSpot::StateChangeLit_Implementation() {
 	Super::StateChangeLit_Implementation();
 
 	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
-	GameModeInstance->SaveGame();
+	//GameModeInstance->SaveGame();
 }
 
 void AEnvLightInteractableSaveSpot::CheckForCharacters() {

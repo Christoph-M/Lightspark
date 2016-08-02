@@ -33,6 +33,7 @@ public:
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
 	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
+	void SetDoorOpen(int segment) { if (segment > 0) DoorsOpen[segment - 1] = true; }
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void SaveGame(FString const &slotName = "DefaultSlot");

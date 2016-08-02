@@ -68,12 +68,14 @@ void ATriggeredActorSegmentDoor::OpenDoor() {
 }
 
 void ATriggeredActorSegmentDoor::ActivateDoor_Implementation() {
-	UE_LOG(LogClass, Log, TEXT("Door has been opened"));
+	UE_LOG(LogClass, Log, TEXT("Segment %d door has been opened"), segment);
+
+	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	GameModeInstance->SetDoorOpen(segment);
 
 	if (!doorOpen) {
 		doorOpen = true;
-
-		ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
 
 		GameModeInstance->SaveGame();
 	}

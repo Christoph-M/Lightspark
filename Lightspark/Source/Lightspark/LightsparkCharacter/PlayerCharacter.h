@@ -86,6 +86,8 @@ public:
 	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
 	void MyTakeDamage();
 
+	int32 GetCurrentSegment() { return curSegment; }
+
 	UFUNCTION(BlueprintCallable, Category = "Segment")
 	void SetCurrentSegment(int32 segment);
 

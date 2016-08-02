@@ -141,6 +141,8 @@ void APlayerCharacter::BeginPlay() {
 		FollowCamera->SetRelativeLocation(PlayerLoadInstance->Player.CameraLocation);
 		FollowCamera->SetRelativeRotation(PlayerLoadInstance->Player.CameraRotation);
 
+		curSegment = PlayerLoadInstance->Player.currentSegment;
+		segmentLit = PlayerLoadInstance->Player.segmentLit;
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
 
@@ -253,8 +255,8 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::StopJumping);
 
-	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
-	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
+	/*InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
+	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);*/
 
 	InputComponent->BindAction("Sneak", IE_Pressed, this, &APlayerCharacter::StartSneak);
 	InputComponent->BindAction("Sneak", IE_Released, this, &APlayerCharacter::StopSneak);
