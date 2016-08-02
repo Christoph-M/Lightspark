@@ -28,19 +28,17 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintPure, Category = "Lightspark")
-
 	ELightsparkPlayState GetCurrentPlayState() const { return CurrentState; }
 
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
 	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
 
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void SaveGame(FString const &slotName = "DefaultSlot");
 
 	class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
 	class UIndexList* LoadIndexList();
-
-	class ULightsparkSaveGame* GetGameSave() { return GameSave; }
 
 	FMyBeginPlay OnGameModeBeginPlay;
 

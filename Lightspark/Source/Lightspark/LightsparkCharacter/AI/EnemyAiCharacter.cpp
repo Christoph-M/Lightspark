@@ -22,7 +22,7 @@ void AEnemyAiCharacter::BeginPlay() {
 
 	this->SetID();
 
-	ULightsparkSaveGame* ActorLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->GetGameSave();
+	ULightsparkSaveGame* ActorLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
 
 	if (ActorLoadInstance) {
 		for (FNPCSaveData Entry : ActorLoadInstance->Enemies) {
