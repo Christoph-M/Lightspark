@@ -77,6 +77,7 @@ APlayerCharacter::APlayerCharacter() {
 	isDashing = false;
 	canDash = false;
 	isInShadow = true;
+	segmentLit = false;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
@@ -219,10 +220,9 @@ void APlayerCharacter::Tick(float deltaTime) {
 
 	if (!lightFlashActive) {
 		if (!bIsCrouched) {
-			if (isInShadow) {
+			if (isInShadow && !segmentLit) {
 				this->UseEnergy(shadowEnergyDamage * deltaTime);
-			}
-			else  if (characterEnergy < maxEnergy) {
+			} else  if (characterEnergy < maxEnergy) {
 				this->UseEnergy(-lightEnergyGain * deltaTime);
 			}
 		}
@@ -404,6 +404,16 @@ void APlayerCharacter::MyTakeDamage() {
 }
 
 
+void APlayerCharacter::SetCurrentSegment(int32 segment) {
+	if (segment != curSegment) {
+		curSegment = segment;
+		UE_LOG(LogClass, Log, TEXT("Segment changed. Current Segment: %d"), curSegment);
+		
+		segmentLit = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->IsDoorOpen(curSegment);
+	}
+}
+
+
 void APlayerCharacter::Interact() {
 	if (!isInteracting) {
 		TArray<AActor*> CollectedActors;
@@ -450,6 +460,7 @@ void APlayerCharacter::Interact() {
 
 			if (TestDoor && !TestDoor->IsPendingKill()) {
 				TestDoor->OpenDoor();
+				segmentLit = true;
 
 				return;
 			}

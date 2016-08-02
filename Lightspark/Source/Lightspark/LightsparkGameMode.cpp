@@ -191,6 +191,7 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 			LightpsarkSaveInstance->LevelSegments.Add(FLevelSegmentData());
 			LightpsarkSaveInstance->LevelSegments[i].segment = Actor->segment;
 			LightpsarkSaveInstance->LevelSegments[i].doorOpen = Actor->IsDoorOpen();
+			DoorsOpen[i] = Actor->IsDoorOpen();
 
 			++i;
 		}

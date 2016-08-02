@@ -86,6 +86,9 @@ public:
 	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
 	void MyTakeDamage();
 
+	UFUNCTION(BlueprintCallable, Category = "Segment")
+	void SetCurrentSegment(int32 segment);
+
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
@@ -491,6 +494,10 @@ private:
 	int32 characterRunes;
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Segment", meta = (AllowPrivateAccess = "true"))
+	int32 curSegment;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
 	float lightRangeFactor;
 
@@ -644,7 +651,7 @@ private:
 
 	FVector measureStart, measureEnd;
 
-	bool isInteracting, canSpend, canConsume, isInShadow;
+	bool isInteracting, canSpend, canConsume, isInShadow, segmentLit;
 
 	class AActor* interactedActor;
 };
