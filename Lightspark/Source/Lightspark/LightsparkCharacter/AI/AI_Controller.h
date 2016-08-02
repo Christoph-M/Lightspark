@@ -30,18 +30,18 @@ public:
 	//UFUNCTION(BlueprintCallable, Category = Behavior)
 	//	void SearchForEnemy();
 
-	UFUNCTION(BlueprintCallable, Category = Sensing)
+	/*UFUNCTION(BlueprintCallable, Category = Sensing)
 		bool GetEnemyInSight() { return EnemyInSight; };
 
-	void SetEnemyInSight(bool b) { EnemyInSight = b; };
+	void SetEnemyInSight(bool b) { EnemyInSight = b; };*/
 
 protected:
 
 	uint8 EnemyKeyID;
 	uint8 EnemyLocationID;
 
-	UPROPERTY(BlueprintReadOnly, Category = Sensing)
-		bool EnemyInSight;
+	/*UPROPERTY(BlueprintReadOnly, Category = Sensing)
+		bool EnemyInSight;*/
 
 private:
 

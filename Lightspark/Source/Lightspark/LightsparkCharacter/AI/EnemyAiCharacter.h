@@ -26,7 +26,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class UPawnSensingComponent* PawnSensor;
 
-	bool IsEnemyInSight() { return EnemyInSight; };
+	//bool IsEnemyInSight() { return EnemyInSight; };
 
 private:
 	UFUNCTION()
@@ -37,6 +37,4 @@ private:
 
 	UFUNCTION()
 	void OnSeePawn(APawn* OtherCharacter);
-
-	bool EnemyInSight;
 };

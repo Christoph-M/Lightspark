@@ -36,15 +36,15 @@ void AAI_Controller::SetEnemy(APawn * InPawn)
 {
 	AEnemyAiCharacter* Char = Cast<AEnemyAiCharacter>(InPawn);
 
-	if (Char->IsEnemyInSight())
-	{
+	/*if (Char->IsEnemyInSight())
+	{*/
 		BlackboardComp->SetValueAsObject(BlackboardComp->GetKeyName(EnemyKeyID), InPawn);
-		BlackboardComp->SetValueAsVector(BlackboardComp->GetKeyName(EnemyLocationID), InPawn->GetActorLocation());
-	}
-	else
+		//BlackboardComp->SetValueAsVector(BlackboardComp->GetKeyName(EnemyLocationID), InPawn->GetActorLocation());
+	//}
+	/*else
 	{
 		BlackboardComp->SetValueAsObject(BlackboardComp->GetKeyName(EnemyKeyID), NULL);
 		BlackboardComp->SetValueAsVector(BlackboardComp->GetKeyName(EnemyLocationID), StartLocation);
-	}
+	}*/
 }
 
