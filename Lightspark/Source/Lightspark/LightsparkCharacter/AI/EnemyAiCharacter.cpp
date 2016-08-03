@@ -18,10 +18,19 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 
 	AIControllerClass = AAI_Controller::StaticClass();
 	PawnSensor = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("Sensing"));
-	PawnSensor->HearingThreshold = 500.0f;
+	PawnSensor->HearingThreshold = 0;
 	PawnSensor->LOSHearingThreshold = PawnSensor->HearingThreshold;
-	PawnSensor->SightRadius = 1500.0f;
+	PawnSensor->SightRadius = 2000.0f;
 	PawnSensor->SetPeripheralVisionAngle(45.0f);
+
+	SensingRadius = CreateDefaultSubobject<USphereComponent>(TEXT("SensingRadius"));
+	SensingRadius->AttachTo(GetCapsuleComponent());
+	SensingRadius->SetSphereRadius(1000.0f);
+
+	AttentionRadius = CreateDefaultSubobject<USphereComponent>(TEXT("AttentionRadius"));
+	AttentionRadius->AttachTo(GetCapsuleComponent());
+	AttentionRadius->SetSphereRadius(2000.0f);
+	
 }
 
 //tick check intereaction sphere player 		GetInteractionSphere()->

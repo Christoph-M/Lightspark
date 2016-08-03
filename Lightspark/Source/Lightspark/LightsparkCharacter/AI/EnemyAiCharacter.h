@@ -26,6 +26,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class UPawnSensingComponent* PawnSensor;
 
+	UPROPERTY(EditAnywhere, Category = Sensing)
+		class USphereComponent* SensingRadius;
+
+	UPROPERTY(EditAnywhere, Category = Sensing)
+		class USphereComponent* AttentionRadius;
+
 	//bool IsEnemyInSight() { return EnemyInSight; };
 
 private:
