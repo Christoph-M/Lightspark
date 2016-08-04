@@ -41,6 +41,9 @@ struct FPlayerSaveData {
 	float characterEnergy;
 
 	UPROPERTY()
+	int32 maxLightFlashUses;
+
+	UPROPERTY()
 	int32 lightFlashUses;
 
 

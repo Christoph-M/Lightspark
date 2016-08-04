@@ -148,6 +148,7 @@ void APlayerCharacter::BeginPlay() {
 		segmentLit = PlayerLoadInstance->Player.segmentLit;
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
+		maxLightFlashUses = PlayerLoadInstance->Player.maxLightFlashUses;
 		lightFlashUses = PlayerLoadInstance->Player.lightFlashUses;
 
 		for (int i = 0; i < 4; ++i) {
@@ -468,8 +469,6 @@ void APlayerCharacter::Interact() {
 			if (TestDoor && !TestDoor->IsPendingKill() && !TestDoor->IsDoorOpen()) {
 				TestDoor->OpenDoor();
 				segmentLit = true;
-				lightFlashUses = maxLightFlashUses;
-				UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 
 				return;
 			}
