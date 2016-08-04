@@ -48,11 +48,27 @@ void AEnemyAiCharacter::BeginPlay() {
 	if (!GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
 		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::CheckPlayer);
 	}
+
+	if (!SensingRadius->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::InSensRad)) {
+		SensingRadius->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::InSensRad);
+	}
+
+	if (!AttentionRadius->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::InAttRad)) {
+		AttentionRadius->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::InAttRad);
+	}
 }
 
 void AEnemyAiCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 	if (GetCapsuleComponent()->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::CheckPlayer)) {
 		GetCapsuleComponent()->OnComponentBeginOverlap.RemoveDynamic(this, &AEnemyAiCharacter::CheckPlayer);
+	}
+
+	if(SensingRadius->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::InSensRad)) {
+		SensingRadius->OnComponentBeginOverlap.RemoveDynamic(this, &AEnemyAiCharacter::InSensRad);
+	}
+
+	if (AttentionRadius->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::InAttRad)) {
+		AttentionRadius->OnComponentBeginOverlap.RemoveDynamic(this, &AEnemyAiCharacter::InAttRad);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -93,6 +109,45 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 	if (TestPlayer && !TestPlayer->IsPendingKill()) {
 		TestPlayer->MyTakeDamage();
 		this->Destroy();
+	}
+}
+
+void AEnemyAiCharacter::InAttRad(AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	UPointLightComponent* LightSphere;
+
+	if (OtherActor->FindComponentByClass<UPointLightComponent>())
+	{
+		LightSphere = OtherActor->FindComponentByClass<UPointLightComponent>();
+
+		if (LightSphere->ComponentHasTag("LifeLight"))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("IN ATTENTION RADIUS"));
+		}
+	}
+}
+
+void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	UPointLightComponent* LightSphere;
+
+	if (OtherActor->FindComponentByClass<UPointLightComponent>())
+	{
+		LightSphere = OtherActor->FindComponentByClass<UPointLightComponent>();
+
+		if (LightSphere->ComponentHasTag("LifeLight"))
+		{
+			AAI_Controller* AICont;
+			AICont = Cast<AAI_Controller>(GetController());
+			ALightsparkCharacter* Character = Cast<ALightsparkCharacter>(OtherActor);
+
+			if (OtherActor->IsA<ALightsparkCharacter>())
+			{
+				AICont->SetEnemy(Character);
+			}
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TOO CLOSE"));
+		}
 	}
 }
 
