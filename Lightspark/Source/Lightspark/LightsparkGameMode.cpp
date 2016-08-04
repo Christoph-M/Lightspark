@@ -204,9 +204,11 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 		LightpsarkSaveInstance->Player.CameraRotation = MyCharacter->GetFollowCamera()->RelativeRotation;
 
 		LightpsarkSaveInstance->Player.currentSegment = MyCharacter->GetCurrentSegment();
+		UE_LOG(LogClass, Log, TEXT("Current Player Segment: %d"), MyCharacter->GetCurrentSegment());
 		LightpsarkSaveInstance->Player.segmentLit = DoorsOpen[MyCharacter->GetCurrentSegment() - 1];
 		LightpsarkSaveInstance->Player.currentMaxEnergy = MyCharacter->GetCurrentMaxEnergy();
 		LightpsarkSaveInstance->Player.characterEnergy = MyCharacter->GetCurrentCharacterEnergy();
+		LightpsarkSaveInstance->Player.lightFlashUses = MyCharacter->GetLightFlashUses();
 
 		for (int i = 0; i < 4; ++i) {
 			LightpsarkSaveInstance->Player.SprintEmpowermentActive.Add(MyCharacter->GetSprintEmpowermentActive(i));

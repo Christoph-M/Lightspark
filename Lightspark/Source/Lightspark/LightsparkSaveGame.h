@@ -29,7 +29,7 @@ struct FPlayerSaveData {
 
 
 	UPROPERTY()
-	int currentSegment;
+	int32 currentSegment;
 
 	UPROPERTY()
 	bool segmentLit;
@@ -39,6 +39,9 @@ struct FPlayerSaveData {
 
 	UPROPERTY()
 	float characterEnergy;
+
+	UPROPERTY()
+	int32 lightFlashUses;
 
 
 	UPROPERTY()

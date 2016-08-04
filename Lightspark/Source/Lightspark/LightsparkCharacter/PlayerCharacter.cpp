@@ -55,6 +55,7 @@ APlayerCharacter::APlayerCharacter() {
 	sneakEnergy = 0.0f;
 	sneakOffset = 0.0f;
 	lightFlashRange = 5000.0f;
+	maxLightFlashUses = 3;
 	lightFlashTime = 0.0f;
 	initialAttenuationRadius = 0.0f;
 	lightFlashActive = false;
@@ -96,6 +97,8 @@ APlayerCharacter::APlayerCharacter() {
 	isInteracting = false;
 	canSpend = false;
 	canConsume = false;
+
+	curSegment = 1;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -145,6 +148,7 @@ void APlayerCharacter::BeginPlay() {
 		segmentLit = PlayerLoadInstance->Player.segmentLit;
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
+		lightFlashUses = PlayerLoadInstance->Player.lightFlashUses;
 
 		for (int i = 0; i < 4; ++i) {
 			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
@@ -156,6 +160,7 @@ void APlayerCharacter::BeginPlay() {
 	} else {
 		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+		lightFlashUses = maxLightFlashUses;
 	}
 	
 	lightEnergy = characterEnergy;
@@ -460,9 +465,11 @@ void APlayerCharacter::Interact() {
 
 			ATriggeredActorSegmentDoor* TestDoor = Cast<ATriggeredActorSegmentDoor>(CollectedActors[i]);
 
-			if (TestDoor && !TestDoor->IsPendingKill()) {
+			if (TestDoor && !TestDoor->IsPendingKill() && !TestDoor->IsDoorOpen()) {
 				TestDoor->OpenDoor();
 				segmentLit = true;
+				lightFlashUses = maxLightFlashUses;
+				UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 
 				return;
 			}
@@ -645,12 +652,14 @@ void APlayerCharacter::StopSneak() {
 
 
 void APlayerCharacter::StartLightFlash() {
-	if (!lightFlashActive) {
+	if (!lightFlashActive && lightFlashUses > 0) {
 		lightFlashActive = true;
 		this->StopSneak();
 		characterEnergy = maxEnergy;
 		*maxWalkSpeed = maxSprintSpeed;
 		lightFlashTime = 0.0f;
+		if (!segmentLit) --lightFlashUses;
+		UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 		initialAttenuationRadius = LifeLight->AttenuationRadius;
 		LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
 	}

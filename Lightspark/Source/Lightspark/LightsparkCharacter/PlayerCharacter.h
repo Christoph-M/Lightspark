@@ -91,6 +91,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Segment")
 	void SetCurrentSegment(int32 segment);
 
+	int32 GetLightFlashUses() { return lightFlashUses; }
+
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
@@ -476,6 +478,20 @@ protected:
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float lightFlashRange;
+
+	/**
+	* Max Light Flash Uses (int32)
+	* How many light flash uses the player can have
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	int32 maxLightFlashUses;
+
+	/**
+	* Light Flash Uses (int32)
+	* How many light flash uses the player has left
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	int32 lightFlashUses;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
 	TArray<class AActor*> Checkpoints;
