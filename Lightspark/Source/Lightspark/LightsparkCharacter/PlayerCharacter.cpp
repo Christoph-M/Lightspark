@@ -948,6 +948,8 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 
 void APlayerCharacter::DisplayCurrentStates() {
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Light Flash Charges: %d"), lightFlashUses));
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Max Light Flash Charges: %d"), maxLightFlashUses));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
 	if (GetSprintEmpowermentActive(0)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Faster Sprint active.")));
 	if (GetSprintEmpowermentActive(1)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Reduced Sprint Cost active.")));

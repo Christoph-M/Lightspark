@@ -99,7 +99,7 @@ public:
 	int32 GetMaxLightFlashUses() { return maxLightFlashUses; }
 
 	UFUNCTION(BlueprintCallable, Category = "Light")
-	void SetMaxLightFlashUses(int32 maxCharges) { maxLightFlashUses = maxCharges; }
+	void SetMaxLightFlashUses(int32 maxCharges) { maxLightFlashUses = maxCharges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
 
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
