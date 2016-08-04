@@ -9,6 +9,8 @@
 AEnvLightInteractableSaveSpot::AEnvLightInteractableSaveSpot() {
 	PrimaryActorTick.bCanEverTick = true;
 
+	saveSpotType = ESaveSpotType::Unknown;
+
 	resetState = false;
 }
 

@@ -5,6 +5,13 @@
 #include "LightInteractable/EnvLightInteractable/EnvLightInteractable.h"
 #include "EnvLightInteractableSaveSpot.generated.h"
 
+UENUM(BlueprintType)
+enum class ESaveSpotType {
+	Red,
+	Blue,
+	Green,
+	Unknown
+};
 
 UCLASS()
 class LIGHTSPARK_API AEnvLightInteractableSaveSpot : public AEnvLightInteractable
@@ -18,4 +25,8 @@ public:
 	virtual void StateChangeLit_Implementation() override;
 
 	virtual void CheckForCharacters() override;
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SaveSpotType", meta = (AllowPrivateAccess = "true"))
+	TEnumAsByte<ESaveSpotType> saveSpotType;
 };
