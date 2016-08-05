@@ -30,9 +30,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Lightspark")
 	ELightsparkPlayState GetCurrentPlayState() const { return CurrentState; }
 
+	UFUNCTION(BlueprintCallable, Category = "Lightspark")
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
-	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
+	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : true; }
 	void SetDoorOpen(int segment) { if (segment > 0) DoorsOpen[segment - 1] = true; }
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")

@@ -23,6 +23,7 @@ public:
 
 	virtual void Trigger_Implementation(class AActor* OtherActor) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Door")
 	void OpenDoor();
 
 	UFUNCTION(BlueprintNativeEvent)

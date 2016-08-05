@@ -78,7 +78,7 @@ APlayerCharacter::APlayerCharacter() {
 	isDashing = false;
 	canDash = false;
 	isInShadow = true;
-	segmentLit = false;
+	segmentLit = true;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
@@ -98,7 +98,7 @@ APlayerCharacter::APlayerCharacter() {
 	canSpend = false;
 	canConsume = false;
 
-	curSegment = 1;
+	curSegment = 0;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -947,6 +947,7 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::White, FString::Printf(TEXT("Current Segment: %d"), curSegment));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Light Flash Charges: %d"), lightFlashUses));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Max Light Flash Charges: %d"), maxLightFlashUses));
