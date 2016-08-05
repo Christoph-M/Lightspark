@@ -299,6 +299,11 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
 	InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
 	InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
+	InputComponent->BindAction("DisableEnergyLoss", IE_Pressed, this, &APlayerCharacter::ToggleEnergyLoss);
+}
+
+void APlayerCharacter::ToggleEnergyLoss() {
+	isInShadow = !isInShadow;
 }
 
 void APlayerCharacter::TeleportToCheckpoint0() {
@@ -402,12 +407,15 @@ void APlayerCharacter::MoveRight(float Value)
 
 
 void APlayerCharacter::MyTakeDamage() {
-	if (characterEnergy <= 0.0f) {
-		/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
-		GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
-		characterEnergy = -0.1f;
-	} else {
-		this->UseEnergy(hitEnergyDamage);
+	if (!lightFlashActive) {
+		if (characterEnergy <= 0.0f) {
+			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
+			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
+			characterEnergy = -0.1f;
+		}
+		else {
+			this->UseEnergy(hitEnergyDamage);
+		}
 	}
 }
 
@@ -715,7 +723,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	this->UseEnergy(jumpEnergyConsume);
+	//this->UseEnergy(jumpEnergyConsume);
 
 	jumpTime += deltaTime;
 

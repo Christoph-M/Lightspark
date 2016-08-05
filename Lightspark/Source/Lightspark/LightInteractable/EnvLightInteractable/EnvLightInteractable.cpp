@@ -35,7 +35,7 @@ void AEnvLightInteractable::BeginPlay() {
 		}
 	}
 
-	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState && isDoorOpen) {
+	if (!GetSphere()->OnComponentEndOverlap.IsAlreadyBound(this, &AEnvLightInteractable::UpdateState) && resetState && !isDoorOpen) {
 		GetSphere()->OnComponentEndOverlap.AddDynamic(this, &AEnvLightInteractable::UpdateState);
 	}
 }
