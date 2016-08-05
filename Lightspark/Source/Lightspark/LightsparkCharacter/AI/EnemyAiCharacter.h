@@ -16,8 +16,23 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void PostInitializeComponents() override;
 
 	void SetID();
+
+	UPROPERTY(EditAnywhere, Category = Behavior)
+		class UBehaviorTree* Behavior;
+
+	UPROPERTY(EditAnywhere, Category = Sensing)
+		class UPawnSensingComponent* PawnSensor;
+
+	UPROPERTY(EditAnywhere, Category = Sensing)
+		class USphereComponent* SensingRadius;
+
+	UPROPERTY(EditAnywhere, Category = Sensing)
+		class USphereComponent* AttentionRadius;
+
+	//bool IsEnemyInSight() { return EnemyInSight; };
 
 protected:
 	UFUNCTION()
@@ -32,6 +47,15 @@ private:
 
 	UFUNCTION()
 	void CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+		void InAttRad(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	
+	UFUNCTION()
+		void InSensRad(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+	void OnSeePawn(APawn* OtherCharacter);
 
 private:
 	class APlayerCharacter* PlayerCharacter;
