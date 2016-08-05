@@ -86,6 +86,21 @@ public:
 	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
 	void MyTakeDamage();
 
+	int32 GetCurrentSegment() { return curSegment; }
+
+	UFUNCTION(BlueprintCallable, Category = "Segment")
+	void SetCurrentSegment(int32 segment);
+
+	int32 GetLightFlashUses() { return lightFlashUses; }
+
+	UFUNCTION(BlueprintCallable, Category = "Light")
+	void SetLightFlashUses(int32 charges) { lightFlashUses += charges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
+
+	int32 GetMaxLightFlashUses() { return maxLightFlashUses; }
+
+	UFUNCTION(BlueprintCallable, Category = "Light")
+	void SetMaxLightFlashUses(int32 maxCharges) { maxLightFlashUses = maxCharges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
+
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
@@ -475,6 +490,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
 	float lightFlashRange;
 
+	/**
+	* Max Light Flash Uses (int32)
+	* How many light flash uses the player can have
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	int32 maxLightFlashUses;
+
+	/**
+	* Light Flash Uses (int32)
+	* How many light flash uses the player has left
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Light", Meta = (BlueprintProtected = "true"))
+	int32 lightFlashUses;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
 	TArray<class AActor*> Checkpoints;
 
@@ -492,6 +521,10 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Energy", meta = (AllowPrivateAccess = "true"))
 	int32 characterRunes;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Segment", meta = (AllowPrivateAccess = "true"))
+	int32 curSegment;
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light", meta = (AllowPrivateAccess = "true"))
@@ -647,7 +680,7 @@ private:
 
 	FVector measureStart, measureEnd;
 
-	bool isInteracting, canSpend, canConsume, isInShadow;
+	bool isInteracting, canSpend, canConsume, isInShadow, segmentLit;
 
 	class AActor* interactedActor;
 };

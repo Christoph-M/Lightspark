@@ -29,10 +29,22 @@ struct FPlayerSaveData {
 
 
 	UPROPERTY()
+	int32 currentSegment;
+
+	UPROPERTY()
+	bool segmentLit;
+
+	UPROPERTY()
 	float currentMaxEnergy;
 
 	UPROPERTY()
 	float characterEnergy;
+
+	UPROPERTY()
+	int32 maxLightFlashUses;
+
+	UPROPERTY()
+	int32 lightFlashUses;
 
 
 	UPROPERTY()

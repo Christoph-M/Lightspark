@@ -55,6 +55,7 @@ APlayerCharacter::APlayerCharacter() {
 	sneakEnergy = 0.0f;
 	sneakOffset = 0.0f;
 	lightFlashRange = 5000.0f;
+	maxLightFlashUses = 3;
 	lightFlashTime = 0.0f;
 	initialAttenuationRadius = 0.0f;
 	lightFlashActive = false;
@@ -77,6 +78,7 @@ APlayerCharacter::APlayerCharacter() {
 	isDashing = false;
 	canDash = false;
 	isInShadow = true;
+	segmentLit = true;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
@@ -95,6 +97,8 @@ APlayerCharacter::APlayerCharacter() {
 	isInteracting = false;
 	canSpend = false;
 	canConsume = false;
+
+	curSegment = 0;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -130,7 +134,7 @@ void APlayerCharacter::BeginPlay() {
 
 	CharacterMovement = GetCharacterMovement();
 
-	ULightsparkSaveGame* PlayerLoadInstance = ALightsparkGameMode::LoadGame();
+	ULightsparkSaveGame* PlayerLoadInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->LoadGame();
 	
 	if (PlayerLoadInstance && FString(*UGameplayStatics::GetCurrentLevelName(this)) != TEXT("MainMenu")) {
 		SetActorLocation(PlayerLoadInstance->Player.CharacterLocation);
@@ -140,8 +144,12 @@ void APlayerCharacter::BeginPlay() {
 		FollowCamera->SetRelativeLocation(PlayerLoadInstance->Player.CameraLocation);
 		FollowCamera->SetRelativeRotation(PlayerLoadInstance->Player.CameraRotation);
 
+		curSegment = PlayerLoadInstance->Player.currentSegment;
+		segmentLit = PlayerLoadInstance->Player.segmentLit;
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
+		maxLightFlashUses = PlayerLoadInstance->Player.maxLightFlashUses;
+		lightFlashUses = PlayerLoadInstance->Player.lightFlashUses;
 
 		for (int i = 0; i < 4; ++i) {
 			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
@@ -153,6 +161,7 @@ void APlayerCharacter::BeginPlay() {
 	} else {
 		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
+		lightFlashUses = maxLightFlashUses;
 	}
 	
 	lightEnergy = characterEnergy;
@@ -219,10 +228,9 @@ void APlayerCharacter::Tick(float deltaTime) {
 
 	if (!lightFlashActive) {
 		if (!bIsCrouched) {
-			if (isInShadow) {
+			if (isInShadow && !segmentLit) {
 				this->UseEnergy(shadowEnergyDamage * deltaTime);
-			}
-			else  if (characterEnergy < maxEnergy) {
+			} else  if (characterEnergy < maxEnergy) {
 				this->UseEnergy(-lightEnergyGain * deltaTime);
 			}
 		}
@@ -253,8 +261,8 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &APlayerCharacter::StopJumping);
 
-	InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
-	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);
+	/*InputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::StartSprinting);
+	InputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::StopSprinting);*/
 
 	InputComponent->BindAction("Sneak", IE_Pressed, this, &APlayerCharacter::StartSneak);
 	InputComponent->BindAction("Sneak", IE_Released, this, &APlayerCharacter::StopSneak);
@@ -412,6 +420,16 @@ void APlayerCharacter::MyTakeDamage() {
 }
 
 
+void APlayerCharacter::SetCurrentSegment(int32 segment) {
+	if (segment != curSegment) {
+		curSegment = segment;
+		UE_LOG(LogClass, Log, TEXT("Segment changed. Current Segment: %d"), curSegment);
+		
+		segmentLit = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->IsDoorOpen(curSegment);
+	}
+}
+
+
 void APlayerCharacter::Interact() {
 	if (!isInteracting) {
 		TArray<AActor*> CollectedActors;
@@ -456,8 +474,9 @@ void APlayerCharacter::Interact() {
 
 			ATriggeredActorSegmentDoor* TestDoor = Cast<ATriggeredActorSegmentDoor>(CollectedActors[i]);
 
-			if (TestDoor && !TestDoor->IsPendingKill()) {
+			if (TestDoor && !TestDoor->IsPendingKill() && !TestDoor->IsDoorOpen()) {
 				TestDoor->OpenDoor();
+				segmentLit = true;
 
 				return;
 			}
@@ -640,12 +659,14 @@ void APlayerCharacter::StopSneak() {
 
 
 void APlayerCharacter::StartLightFlash() {
-	if (!lightFlashActive) {
+	if (!lightFlashActive && lightFlashUses > 0) {
 		lightFlashActive = true;
 		this->StopSneak();
 		characterEnergy = maxEnergy;
 		*maxWalkSpeed = maxSprintSpeed;
 		lightFlashTime = 0.0f;
+		if (!segmentLit) --lightFlashUses;
+		UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 		initialAttenuationRadius = LifeLight->AttenuationRadius;
 		LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
 	}
@@ -780,6 +801,7 @@ void APlayerCharacter::LightFlash(float deltaTime) {
 	if (lightFlashTime >= LightFlashFadeCurve->FloatCurve.GetLastKey().Time) {
 		lightFlashTime = LightFlashFadeCurve->FloatCurve.GetLastKey().Time;
 		lightEnergy = maxEnergy;
+		CurrentLightUpdateState = ELightUpdateState::NoUpdate;
 		lightFlashActive = false;
 	}
 
@@ -933,7 +955,10 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::White, FString::Printf(TEXT("Current Segment: %d"), curSegment));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Light Flash Charges: %d"), lightFlashUses));
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Max Light Flash Charges: %d"), maxLightFlashUses));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Orange, FString::Printf(TEXT("Movement State: %d"), static_cast<uint8>(this->GetCurrentMovementState())));
 	if (GetSprintEmpowermentActive(0)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Faster Sprint active.")));
 	if (GetSprintEmpowermentActive(1)) GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Emerald, FString::Printf(TEXT("Reduced Sprint Cost active.")));

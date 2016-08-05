@@ -30,14 +30,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Lightspark")
 	ELightsparkPlayState GetCurrentPlayState() const { return CurrentState; }
 
+	UFUNCTION(BlueprintCallable, Category = "Lightspark")
 	void SetCurrentPlayState(ELightsparkPlayState NewState) { CurrentState = NewState; }
 
-	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : false; }
+	bool IsDoorOpen(int segment) { return (segment > 0) ? DoorsOpen[segment - 1] : true; }
+	void SetDoorOpen(int segment) { if (segment > 0) DoorsOpen[segment - 1] = true; }
 
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void SaveGame(FString const &slotName = "DefaultSlot");
 
-	static class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
-	static class UIndexList* LoadIndexList();
+	class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
+	class UIndexList* LoadIndexList();
 
 	FMyBeginPlay OnGameModeBeginPlay;
 
@@ -61,11 +64,11 @@ private:
 
 	void LoadActors();
 
-public:
-	bool updateIndexList;
-
 private:
 	ELightsparkPlayState CurrentState;
+
+	ULightsparkSaveGame* GameSave;
+	UIndexList* IndexList;
 
 	TArray<bool> DoorsOpen;
 };
