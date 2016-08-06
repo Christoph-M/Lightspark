@@ -4,6 +4,7 @@
 #include "TriggeredActor.h"
 #include "LightsparkGameMode.h"
 #include "IndexList.h"
+#include "LightsparkSaveGame.h"
 
 
 // Sets default values
@@ -23,6 +24,27 @@ void ATriggeredActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	this->SetID();
+
+	/*ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	if (GameModeInstance && !GameModeInstance->OnGameModeBeginPlay.IsAlreadyBound(this, &ATriggeredActor::MyBeginPlay)) {
+		GameModeInstance->OnGameModeBeginPlay.AddDynamic(this, &ATriggeredActor::MyBeginPlay);
+	}*/
+}
+
+void ATriggeredActor::MyBeginPlay() {
+	UE_LOG(LogClass, Warning, TEXT("%s"), *this->GetName());
+}
+
+void ATriggeredActor::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+
+	if (GameModeInstance && !GameModeInstance->OnGameModeBeginPlay.IsAlreadyBound(this, &ATriggeredActor::MyBeginPlay)) {
+		GameModeInstance->OnGameModeBeginPlay.RemoveDynamic(this, &ATriggeredActor::MyBeginPlay);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -38,16 +60,13 @@ void ATriggeredActor::Trigger_Implementation(AActor* OtherActor) {
 }
 
 void ATriggeredActor::SetID() {
-	UIndexList* IndexListInstance = ALightsparkGameMode::LoadIndexList();
+	ALightsparkGameMode* GameMode = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+	UIndexList* IndexListInstance = GameMode->LoadIndexList();
 
-	if (IndexListInstance) {
-		for (FIndexListData Entry : IndexListInstance->TriggeredActorIndexList) {
-			if (this->GetActorLocation() == Entry.ActorLocation) {
-				id = Entry.id;
-			}
+	for (FIndexListData Entry : IndexListInstance->TriggeredActorIndexList) {
+		if (this->GetActorLocation() == Entry.ActorLocation) {
+			id = Entry.id;
 		}
-	} else {
-		UE_LOG(LogClass, Error, TEXT("Index List was not found!"));
 	}
 
 	UE_LOG(LogClass, Log, TEXT("TriggeredActor ID: %d"), id);

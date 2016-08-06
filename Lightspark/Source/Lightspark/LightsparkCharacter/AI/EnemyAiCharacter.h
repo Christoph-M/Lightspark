@@ -34,12 +34,22 @@ public:
 
 	//bool IsEnemyInSight() { return EnemyInSight; };
 
+protected:
+	UFUNCTION()
+	void DoorOpened(int32 segmentt);
+
+	UFUNCTION()
+	void PlayerSneakToggle(bool isSneaking);
+
 private:
 	UFUNCTION()
 	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;
 
 	UFUNCTION()
 	void CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+private:
+	class APlayerCharacter* PlayerCharacter;
 
 	UFUNCTION()
 		void InAttRad(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);

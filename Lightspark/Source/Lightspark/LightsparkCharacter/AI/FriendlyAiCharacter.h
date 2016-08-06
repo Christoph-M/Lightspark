@@ -33,6 +33,8 @@ class LIGHTSPARK_API AFriendlyAiCharacter : public AAiCharacter
 public:
 	AFriendlyAiCharacter();
 
+	virtual void BeginPlay() override;
+
 	ESprintEmpowerment GetSprintEmpowerment() { return SprintEmpowerment; }
 	EJumpEmpowerment GetJumpEmpowerment() { return JumpEmpowerment; }
 

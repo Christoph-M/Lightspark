@@ -29,10 +29,22 @@ struct FPlayerSaveData {
 
 
 	UPROPERTY()
+	int32 currentSegment;
+
+	UPROPERTY()
+	bool segmentLit;
+
+	UPROPERTY()
 	float currentMaxEnergy;
 
 	UPROPERTY()
 	float characterEnergy;
+
+	UPROPERTY()
+	int32 maxLightFlashUses;
+
+	UPROPERTY()
+	int32 lightFlashUses;
 
 
 	UPROPERTY()
@@ -81,6 +93,17 @@ struct FActorSaveData {
 	bool hasBeenTriggered;*/
 };
 
+USTRUCT()
+struct FLevelSegmentData {
+	GENERATED_BODY()
+
+	UPROPERTY()
+	uint32 segment;
+	
+	UPROPERTY()
+	bool doorOpen;
+};
+
 
 UCLASS()
 class LIGHTSPARK_API ULightsparkSaveGame : public USaveGame
@@ -101,6 +124,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Location")
 	FName LevelName;
+
+
+	UPROPERTY(VisibleAnywhere, Category = "LevelSegment")
+	TArray<FLevelSegmentData> LevelSegments;
 
 
 	UPROPERTY(VisibleAnywhere, Category = "Player")

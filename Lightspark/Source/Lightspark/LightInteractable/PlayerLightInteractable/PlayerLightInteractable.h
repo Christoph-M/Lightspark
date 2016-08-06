@@ -27,15 +27,10 @@ public:
 	
 	EInteractionType GetInteractionType() { return InteractionType; }
 
-	uint32 GetID() { return id; }
-	void SetID();
-
 protected:
 	virtual void ActivateTriggerActor() override;
 
 private:
-	uint32 id;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TEnumAsByte<EInteractionType> InteractionType;
 };

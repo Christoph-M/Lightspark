@@ -2,6 +2,7 @@
 
 #include "Lightspark.h"
 #include "AiCharacter.h"
+#include "TriggeredActor/TriggeredActorSegmentDoor.h"
 
 
 // Sets default values
