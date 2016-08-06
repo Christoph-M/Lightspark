@@ -46,6 +46,11 @@ void AEnemyAiCharacter::PostInitializeComponents()
 
 void AEnemyAiCharacter::BeginPlay() {
 	Super::BeginPlay();
+	
+	AAI_Controller* AICont;
+	AICont = Cast<AAI_Controller>(GetController());
+
+	AICont->SetEnemyWaypoints(cEnemyWaypoints);
 
 	this->SetID();
 

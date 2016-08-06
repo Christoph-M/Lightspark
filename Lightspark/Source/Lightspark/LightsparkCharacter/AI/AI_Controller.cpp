@@ -7,12 +7,16 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "Lightspark/LightsparkCharacter/AI/EnemyWayPoint.h"
+#include "Navigation/CrowdFollowingComponent.h"
 
 AAI_Controller::AAI_Controller()
 {
 	BlackboardComp = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComp"));
 
 	BehaviorComp = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorComp"));
+
+	CFollowing = CreateDefaultSubobject<UCrowdFollowingComponent>(TEXT("CFollowing"));
 }
 
 void AAI_Controller::Possess(APawn* InPawn)
@@ -24,9 +28,8 @@ void AAI_Controller::Possess(APawn* InPawn)
 	{
 		BlackboardComp->InitializeBlackboard(*Char->Behavior->BlackboardAsset);
 
-		EnemyKeyID = BlackboardComp->GetKeyID("Enemy");
-		EnemyLocationID = BlackboardComp->GetKeyID("Destination");
-		StartLocation = Char->GetActorLocation();
+		LocationToGoKey = "LocationToGo";
+		EnemyKey = "Enemy";
 
 		BehaviorComp->StartTree(*Char->Behavior);
 	}
@@ -36,15 +39,7 @@ void AAI_Controller::SetEnemy(APawn * InPawn)
 {
 	AEnemyAiCharacter* Char = Cast<AEnemyAiCharacter>(InPawn);
 
-	/*if (Char->IsEnemyInSight())
-	{*/
-		BlackboardComp->SetValueAsObject(BlackboardComp->GetKeyName(EnemyKeyID), InPawn);
-		//BlackboardComp->SetValueAsVector(BlackboardComp->GetKeyName(EnemyLocationID), InPawn->GetActorLocation());
-	//}
-	/*else
-	{
-		BlackboardComp->SetValueAsObject(BlackboardComp->GetKeyName(EnemyKeyID), NULL);
-		BlackboardComp->SetValueAsVector(BlackboardComp->GetKeyName(EnemyLocationID), StartLocation);
-	}*/
+	BlackboardComp->SetValueAsObject(EnemyKey, InPawn);
+	
 }
 

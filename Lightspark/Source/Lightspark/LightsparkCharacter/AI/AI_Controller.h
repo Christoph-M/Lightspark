@@ -23,29 +23,25 @@ public:
 	UPROPERTY(transient)
 		class UBehaviorTreeComponent* BehaviorComp;
 
+	UPROPERTY(VisibleAnywhere)
+		class UCrowdFollowingComponent* CFollowing;
+
 	virtual void Possess(class APawn * InPawn);
 
 	void SetEnemy(class APawn* InPawn);
 
-	//UFUNCTION(BlueprintCallable, Category = Behavior)
-	//	void SearchForEnemy();
 
-	/*UFUNCTION(BlueprintCallable, Category = Sensing)
-		bool GetEnemyInSight() { return EnemyInSight; };
+	FORCEINLINE UBlackboardComponent* GetBlackboardComp() const { return BlackboardComp; }
 
-	void SetEnemyInSight(bool b) { EnemyInSight = b; };*/
+	FORCEINLINE TArray<AActor*> GetEnemyWaypoints() { return EnemyWaypoints; }
 
+	void SetEnemyWaypoints(TArray<AActor*> WP) { EnemyWaypoints = WP; }
+	
 protected:
 
-	uint8 EnemyKeyID;
-	uint8 EnemyLocationID;
+	FName EnemyKey;
+	FName LocationToGoKey;
 
-	/*UPROPERTY(BlueprintReadOnly, Category = Sensing)
-		bool EnemyInSight;*/
-
-private:
-
-	FVector StartLocation;
-	
-	
+	TArray<AActor*> EnemyWaypoints;
+		
 };

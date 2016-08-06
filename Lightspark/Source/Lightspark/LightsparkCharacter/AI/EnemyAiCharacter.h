@@ -32,11 +32,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class USphereComponent* AttentionRadius;
 
-	//bool IsEnemyInSight() { return EnemyInSight; };
-
 protected:
 	UFUNCTION()
 	void DoorOpened(int32 segmentt);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Waypoints, meta = (AllowPrivateAccess = "true"))
+	TArray<AActor*> cEnemyWaypoints;
 
 	UFUNCTION()
 	void PlayerSneakToggle(bool isSneaking);
