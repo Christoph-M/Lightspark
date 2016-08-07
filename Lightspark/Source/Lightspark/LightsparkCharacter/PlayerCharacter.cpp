@@ -78,7 +78,7 @@ APlayerCharacter::APlayerCharacter() {
 	isDashing = false;
 	canDash = false;
 	isInShadow = true;
-	segmentLit = false;
+	segmentLit = true;
 
 	minLightRange = 600.0f;
 	maxLightRange = 2000.0f;
@@ -98,7 +98,7 @@ APlayerCharacter::APlayerCharacter() {
 	canSpend = false;
 	canConsume = false;
 
-	curSegment = 1;
+	curSegment = 0;
 	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
@@ -299,6 +299,11 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
 	InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
 	InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
+	InputComponent->BindAction("DisableEnergyLoss", IE_Pressed, this, &APlayerCharacter::ToggleEnergyLoss);
+}
+
+void APlayerCharacter::ToggleEnergyLoss() {
+	isInShadow = !isInShadow;
 }
 
 void APlayerCharacter::TeleportToCheckpoint0() {
@@ -402,12 +407,15 @@ void APlayerCharacter::MoveRight(float Value)
 
 
 void APlayerCharacter::MyTakeDamage() {
-	if (characterEnergy <= 0.0f) {
-		/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
-		GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
-		characterEnergy = -0.1f;
-	} else {
-		this->UseEnergy(hitEnergyDamage);
+	if (!lightFlashActive) {
+		if (characterEnergy <= 0.0f) {
+			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
+			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
+			characterEnergy = -0.1f;
+		}
+		else {
+			this->UseEnergy(hitEnergyDamage);
+		}
 	}
 }
 
@@ -715,7 +723,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 
 
 void APlayerCharacter::Jump(float deltaTime) {
-	this->UseEnergy(jumpEnergyConsume);
+	//this->UseEnergy(jumpEnergyConsume);
 
 	jumpTime += deltaTime;
 
@@ -947,6 +955,7 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
+	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::White, FString::Printf(TEXT("Current Segment: %d"), curSegment));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("Current Energy: %f"), characterEnergy));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Light Flash Charges: %d"), lightFlashUses));
 	GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Turquoise, FString::Printf(TEXT("Current Max Light Flash Charges: %d"), maxLightFlashUses));

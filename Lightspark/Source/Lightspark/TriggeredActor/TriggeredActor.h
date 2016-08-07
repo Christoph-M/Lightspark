@@ -32,6 +32,7 @@ public:
 	void SetID();
 
 
+	UFUNCTION(BlueprintCallable, Category = "Trigger")
 	bool HasBeenTriggered() { return hasBeenTriggered; }
 
 	UFUNCTION(BlueprintNativeEvent)

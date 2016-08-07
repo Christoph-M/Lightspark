@@ -17,11 +17,17 @@ AEnvLightInteractableSaveSpot::AEnvLightInteractableSaveSpot() {
 void AEnvLightInteractableSaveSpot::StateChangeLit_Implementation() {
 	Super::StateChangeLit_Implementation();
 
-	ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
+	//ALightsparkGameMode* GameModeInstance = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode());
 	//GameModeInstance->SaveGame();
 }
 
 void AEnvLightInteractableSaveSpot::CheckForCharacters() {
 	UE_LOG(LogClass, Log, TEXT("ERMAHGERDBERDS!!!! %d"), static_cast<uint8>(this->GetCurrentState()));
 	this->ChangeState(EInteractionState::Lit);
+}
+
+void AEnvLightInteractableSaveSpot::ActivateTriggerActor() {
+	Super::ActivateTriggerActor();
+
+	WelcomeSpotPillar->Trigger(this);
 }

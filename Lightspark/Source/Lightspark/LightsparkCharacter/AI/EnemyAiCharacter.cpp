@@ -166,17 +166,22 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 		TestPlayer->MyTakeDamage();
 		this->Disable();
 	}
-
-	AEnvLightInteractable* const TestActor = Cast<AEnvLightInteractable>(OtherActor);
-
-	if (TestActor && !TestActor->IsPendingKill()) {
-		this->Disable();
-	}
 }
 
 void AEnemyAiCharacter::InAttRad(AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	UPointLightComponent* LightSphere;
+	APlayerCharacter* TestPlayer = Cast<APlayerCharacter>(OtherActor);
+
+	if (TestPlayer && !TestPlayer->IsPendingKill()) {
+		USphereComponent* TestSphere = Cast<USphereComponent>(OtherComp);
+
+		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) {
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("IN ATTENTION RADIUS"));
+		}
+	}
+
+
+	/*UPointLightComponent* LightSphere;
 
 	if (OtherActor->FindComponentByClass<UPointLightComponent>())
 	{
@@ -186,12 +191,30 @@ void AEnemyAiCharacter::InAttRad(AActor * OtherActor, UPrimitiveComponent * Othe
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("IN ATTENTION RADIUS"));
 		}
-	}
+	}*/
 }
 
 void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	UPointLightComponent* LightSphere;
+	APlayerCharacter* TestPlayer = Cast<APlayerCharacter>(OtherActor);
+
+	if (TestPlayer && !TestPlayer->IsPendingKill()) {
+		USphereComponent* TestSphere = Cast<USphereComponent>(OtherComp);
+
+		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) {
+			AAI_Controller* AICont;
+			AICont = Cast<AAI_Controller>(GetController());
+			ALightsparkCharacter* Character = Cast<ALightsparkCharacter>(OtherActor);
+
+			if (Character && !Character->IsPendingKill()) {
+				AICont->SetEnemy(Character);
+			}
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TOO CLOSE"));
+		}
+	}
+
+	/*UPointLightComponent* LightSphere;
 
 	if (OtherActor->FindComponentByClass<UPointLightComponent>())
 	{
@@ -209,7 +232,7 @@ void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * Oth
 				NotifyOtherEnemies(Character);
 			}
 		}
-	}
+	}*/
 }
 
 void AEnemyAiCharacter::SetID() {

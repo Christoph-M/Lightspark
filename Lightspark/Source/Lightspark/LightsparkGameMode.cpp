@@ -205,7 +205,7 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 
 		LightsparkSaveInstance->Player.currentSegment = MyCharacter->GetCurrentSegment();
 		UE_LOG(LogClass, Log, TEXT("Current Player Segment: %d"), MyCharacter->GetCurrentSegment());
-		LightsparkSaveInstance->Player.segmentLit = DoorsOpen[MyCharacter->GetCurrentSegment() - 1];
+		LightsparkSaveInstance->Player.segmentLit = this->IsDoorOpen(MyCharacter->GetCurrentSegment());
 		LightsparkSaveInstance->Player.currentMaxEnergy = MyCharacter->GetCurrentMaxEnergy();
 		LightsparkSaveInstance->Player.characterEnergy = MyCharacter->GetCurrentCharacterEnergy();
 		LightsparkSaveInstance->Player.maxLightFlashUses = MyCharacter->GetMaxLightFlashUses();

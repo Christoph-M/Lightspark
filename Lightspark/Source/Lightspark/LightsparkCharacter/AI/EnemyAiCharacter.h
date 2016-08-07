@@ -32,6 +32,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class USphereComponent* AttentionRadius;
 
+	//bool IsEnemyInSight() { return EnemyInSight; };
+=======
 protected:
 	UFUNCTION()
 	void DoorOpened(int32 segmentt);
@@ -60,6 +62,9 @@ private:
 
 	UFUNCTION()
 	void OnSeePawn(APawn* OtherCharacter);
+
+private:
+	class APlayerCharacter* PlayerCharacter;
 
 	void NotifyOtherEnemies(APawn* Pawn);
 };
