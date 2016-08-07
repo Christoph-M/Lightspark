@@ -126,12 +126,24 @@ void AEnemyAiCharacter::OnSeePawn(APawn * OtherCharacter)
 	if (OtherCharacter->IsA<ALightsparkCharacter>())
 	{
 		AICont->SetEnemy(OtherCharacter);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("See Player"));
+		NotifyOtherEnemies(OtherCharacter);
 	}
-	else
+}
+
+void AEnemyAiCharacter::NotifyOtherEnemies(APawn * Pawn)
+{
+	TArray<AActor*> EnemiesToNotify;
+	AttentionRadius->GetOverlappingActors(EnemiesToNotify);
+
+	for (int i = 0; i < EnemiesToNotify.Num(); ++i)
 	{
-		AICont->SetEnemy(NULL);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Don't See Player"));
+		AEnemyAiCharacter* OtherEnemy = Cast<AEnemyAiCharacter>(EnemiesToNotify[i]);
+
+		if (OtherEnemy && !OtherEnemy->IsPendingKill()) 
+		{
+			AAI_Controller* OtherAICont = Cast<AAI_Controller>(OtherEnemy->GetController());
+			OtherAICont->SetEnemy(Pawn);
+		}
 	}
 }
 
@@ -194,9 +206,8 @@ void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * Oth
 			if (OtherActor->IsA<ALightsparkCharacter>())
 			{
 				AICont->SetEnemy(Character);
+				NotifyOtherEnemies(Character);
 			}
-
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TOO CLOSE"));
 		}
 	}
 }

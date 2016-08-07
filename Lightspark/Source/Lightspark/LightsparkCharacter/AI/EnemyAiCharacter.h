@@ -60,4 +60,6 @@ private:
 
 	UFUNCTION()
 	void OnSeePawn(APawn* OtherCharacter);
+
+	void NotifyOtherEnemies(APawn* Pawn);
 };
