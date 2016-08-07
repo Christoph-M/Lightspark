@@ -32,10 +32,13 @@ public:
 
 
 	FORCEINLINE UBlackboardComponent* GetBlackboardComp() const { return BlackboardComp; }
-
+	
+	UFUNCTION(BlueprintCallable, Category = "Waypoints")
 	FORCEINLINE TArray<AActor*> GetEnemyWaypoints() { return EnemyWaypoints; }
 
-	void SetEnemyWaypoints(TArray<AActor*> WP) { EnemyWaypoints = WP; }
+	UFUNCTION(BlueprintCallable, Category = "Waypoints")
+		void SetEnemyWaypoints(TArray<AActor*> WP) { EnemyWaypoints = WP; }
+
 	
 protected:
 

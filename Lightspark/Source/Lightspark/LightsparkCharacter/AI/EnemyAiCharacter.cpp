@@ -32,7 +32,8 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 	AttentionRadius = CreateDefaultSubobject<USphereComponent>(TEXT("AttentionRadius"));
 	AttentionRadius->AttachTo(GetCapsuleComponent());
 	AttentionRadius->SetSphereRadius(2000.0f);
-	
+
+	EnemyInSight = false;	
 }
 
 //tick check intereaction sphere player 		GetInteractionSphere()->
@@ -123,10 +124,11 @@ void AEnemyAiCharacter::OnSeePawn(APawn * OtherCharacter)
 	AAI_Controller* AICont;
 	AICont = Cast<AAI_Controller>(GetController());
 
-	if (OtherCharacter->IsA<ALightsparkCharacter>())
+	if (OtherCharacter->IsA<ALightsparkCharacter>() && !EnemyInSight)
 	{
 		AICont->SetEnemy(OtherCharacter);
 		NotifyOtherEnemies(OtherCharacter);
+		EnemyInSight = true;
 	}
 }
 
@@ -164,7 +166,7 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 
 	if (TestPlayer && !TestPlayer->IsPendingKill()) {
 		TestPlayer->MyTakeDamage();
-		this->Disable();
+		this->Destroy();
 	}
 }
 
@@ -175,8 +177,9 @@ void AEnemyAiCharacter::InAttRad(AActor * OtherActor, UPrimitiveComponent * Othe
 	if (TestPlayer && !TestPlayer->IsPendingKill()) {
 		USphereComponent* TestSphere = Cast<USphereComponent>(OtherComp);
 
-		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) {
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("IN ATTENTION RADIUS"));
+		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) 
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("IN ATT RAD"));
 		}
 	}
 
@@ -198,16 +201,20 @@ void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * Oth
 {
 	APlayerCharacter* TestPlayer = Cast<APlayerCharacter>(OtherActor);
 
-	if (TestPlayer && !TestPlayer->IsPendingKill()) {
+	if (TestPlayer && !TestPlayer->IsPendingKill()) 
+	{
 		USphereComponent* TestSphere = Cast<USphereComponent>(OtherComp);
 
-		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) {
+		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light") && !EnemyInSight) 
+		{
 			AAI_Controller* AICont;
 			AICont = Cast<AAI_Controller>(GetController());
 			ALightsparkCharacter* Character = Cast<ALightsparkCharacter>(OtherActor);
 
-			if (Character && !Character->IsPendingKill()) {
+			if (Character && !Character->IsPendingKill()) 
+			{
 				AICont->SetEnemy(Character);
+				NotifyOtherEnemies(Character);
 			}
 
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TOO CLOSE"));

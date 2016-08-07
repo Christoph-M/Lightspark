@@ -32,8 +32,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class USphereComponent* AttentionRadius;
 
-	//bool IsEnemyInSight() { return EnemyInSight; };
-=======
 protected:
 	UFUNCTION()
 	void DoorOpened(int32 segmentt);
@@ -52,7 +50,6 @@ private:
 	void CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 private:
-	class APlayerCharacter* PlayerCharacter;
 
 	UFUNCTION()
 		void InAttRad(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
@@ -67,4 +64,6 @@ private:
 	class APlayerCharacter* PlayerCharacter;
 
 	void NotifyOtherEnemies(APawn* Pawn);
+
+	bool EnemyInSight;
 };
