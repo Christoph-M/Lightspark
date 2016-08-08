@@ -659,7 +659,7 @@ void APlayerCharacter::StopSneak() {
 
 
 void APlayerCharacter::StartLightFlash() {
-	if (!lightFlashActive && lightFlashUses > 0) {
+	if ((!lightFlashActive && lightFlashUses > 0) || segmentLit) {
 		lightFlashActive = true;
 		this->StopSneak();
 		characterEnergy = maxEnergy;

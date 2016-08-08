@@ -29,5 +29,5 @@ void AEnvLightInteractableSaveSpot::CheckForCharacters() {
 void AEnvLightInteractableSaveSpot::ActivateTriggerActor() {
 	Super::ActivateTriggerActor();
 
-	WelcomeSpotPillar->Trigger(this);
+	if (WelcomeSpotPillar && !WelcomeSpotPillar->IsPendingKill()) WelcomeSpotPillar->Trigger(this);
 }
