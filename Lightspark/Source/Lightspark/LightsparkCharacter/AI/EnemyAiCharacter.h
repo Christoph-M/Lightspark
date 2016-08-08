@@ -5,7 +5,6 @@
 #include "AiCharacter.h"
 #include "EnemyAiCharacter.generated.h"
 
-
 UCLASS()
 class LIGHTSPARK_API AEnemyAiCharacter : public AAiCharacter
 {
@@ -31,7 +30,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class USphereComponent* AttentionRadius;
-
+	
 protected:
 	UFUNCTION()
 	void DoorOpened(int32 segmentt);
@@ -41,6 +40,9 @@ protected:
 
 	UFUNCTION()
 	void PlayerSneakToggle(bool isSneaking);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Disabled")
+	void Disabled();
 
 private:
 	UFUNCTION()
