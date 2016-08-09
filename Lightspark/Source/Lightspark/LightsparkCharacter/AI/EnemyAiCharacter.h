@@ -44,6 +44,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Disabled")
 	void Disabled();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", meta = (AllowPrivateAccess = "true"))
+	float energyDamage;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement", Meta = (BlueprintProtected = "true"))
 	float speedMultiplier;
 

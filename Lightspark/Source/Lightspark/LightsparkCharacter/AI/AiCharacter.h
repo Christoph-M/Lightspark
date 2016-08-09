@@ -29,6 +29,9 @@ public:
 
 	void Disable();
 
+	UFUNCTION(BlueprintCallable, Category = "GoFuckYourself")
+	void Enable();
+
 protected:
 	FORCEINLINE class ATriggeredActorSegmentDoor* GetSegmentDoor() const { return SegmentDoor; }
 
@@ -45,5 +48,6 @@ protected:
 
 	class ATriggeredActorSegmentDoor* SegmentDoor;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy", meta = (AllowPrivateAccess = "true"))
 	bool isEnabled;
 };

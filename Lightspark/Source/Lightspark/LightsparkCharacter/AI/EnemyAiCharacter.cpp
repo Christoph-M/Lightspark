@@ -33,6 +33,8 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 	AttentionRadius->AttachTo(GetCapsuleComponent());
 	AttentionRadius->SetSphereRadius(2000.0f);
 
+	energyDamage = 3.0f;
+
 	speedMultiplier = 2.0f;
 	baseSpeed = GetCharacterMovement()->MaxFlySpeed;
 
@@ -169,10 +171,10 @@ void AEnemyAiCharacter::EvaluateLightInteraction(class AActor* OtherActor, class
 void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) {
 	APlayerCharacter* const TestPlayer = Cast<APlayerCharacter>(OtherActor);
 
-	if (TestPlayer && !TestPlayer->IsPendingKill()) {
-		TestPlayer->MyTakeDamage(3.0f);
-		this->Disabled();
+	if (TestPlayer && !TestPlayer->IsPendingKill() && isEnabled) {
+		TestPlayer->MyTakeDamage(energyDamage);
 		this->Disable();
+		this->Disabled();
 	}
 }
 
