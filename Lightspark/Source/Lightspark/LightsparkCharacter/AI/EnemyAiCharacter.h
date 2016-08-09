@@ -5,7 +5,6 @@
 #include "AiCharacter.h"
 #include "EnemyAiCharacter.generated.h"
 
-
 UCLASS()
 class LIGHTSPARK_API AEnemyAiCharacter : public AAiCharacter
 {
@@ -31,15 +30,19 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class USphereComponent* AttentionRadius;
-
-	//bool IsEnemyInSight() { return EnemyInSight; };
-
+	
 protected:
 	UFUNCTION()
 	void DoorOpened(int32 segmentt);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Waypoints, meta = (AllowPrivateAccess = "true"))
+	TArray<AActor*> cEnemyWaypoints;
+
 	UFUNCTION()
 	void PlayerSneakToggle(bool isSneaking);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Disabled")
+	void Disabled();
 
 private:
 	UFUNCTION()
@@ -47,6 +50,8 @@ private:
 
 	UFUNCTION()
 	void CheckPlayer(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+private:
 
 	UFUNCTION()
 		void InAttRad(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
@@ -59,4 +64,8 @@ private:
 
 private:
 	class APlayerCharacter* PlayerCharacter;
+
+	void NotifyOtherEnemies(APawn* Pawn);
+
+	bool EnemyInSight;
 };
