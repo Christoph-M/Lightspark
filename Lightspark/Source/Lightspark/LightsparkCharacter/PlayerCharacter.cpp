@@ -406,15 +406,14 @@ void APlayerCharacter::MoveRight(float Value)
 }
 
 
-void APlayerCharacter::MyTakeDamage() {
-	if (!lightFlashActive) {
+void APlayerCharacter::MyTakeDamage(float damage) {
+	if (!lightFlashActive && isInShadow) {
 		if (characterEnergy <= 0.0f) {
 			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
 			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
 			characterEnergy = -0.1f;
-		}
-		else {
-			this->UseEnergy(hitEnergyDamage);
+		} else {
+			this->UseEnergy(damage);
 		}
 	}
 }
@@ -659,7 +658,7 @@ void APlayerCharacter::StopSneak() {
 
 
 void APlayerCharacter::StartLightFlash() {
-	if (!lightFlashActive && lightFlashUses > 0) {
+	if ((!lightFlashActive && lightFlashUses > 0) || segmentLit) {
 		lightFlashActive = true;
 		this->StopSneak();
 		characterEnergy = maxEnergy;

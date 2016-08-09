@@ -39,8 +39,16 @@ void AAiCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompone
 }
 
 void AAiCharacter::Disable() {
+	GetCharacterMovement()->MovementMode = EMovementMode::MOVE_None;
 	this->SetActorHiddenInGame(true);
 	this->SetActorTickEnabled(false);
 	this->SetActorEnableCollision(false);
 	isEnabled = false;
+}
+
+void AAiCharacter::Enable() {
+	//GetCharacterMovement()->MovementMode = EMovementMode::MOVE_Flying;
+	this->SetActorHiddenInGame(false);
+	this->SetActorTickEnabled(true);
+	this->SetActorEnableCollision(true);
 }

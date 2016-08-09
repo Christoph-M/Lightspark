@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	void SaveGame(FString const &slotName = "DefaultSlot");
 
+	UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	void DeleteSaveGame();
+
 	class ULightsparkSaveGame* LoadGame(FString const &slotName = "DefaultSlot");
 	class UIndexList* LoadIndexList();
 
