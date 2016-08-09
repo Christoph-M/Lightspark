@@ -129,7 +129,7 @@ void AEnemyAiCharacter::OnSeePawn(APawn * OtherCharacter)
 	AAI_Controller* AICont;
 	AICont = Cast<AAI_Controller>(GetController());
 
-	if (OtherCharacter->IsA<ALightsparkCharacter>() && !EnemyInSight)
+	if (OtherCharacter->IsA<ALightsparkCharacter>() && !EnemyInSight && isEnabled)
 	{
 		AICont->SetEnemy(OtherCharacter);
 		NotifyOtherEnemies(OtherCharacter);
@@ -182,7 +182,7 @@ void AEnemyAiCharacter::InAttRad(AActor * OtherActor, UPrimitiveComponent * Othe
 {
 	APlayerCharacter* TestPlayer = Cast<APlayerCharacter>(OtherActor);
 
-	if (TestPlayer && !TestPlayer->IsPendingKill()) {
+	if (TestPlayer && !TestPlayer->IsPendingKill() && isEnabled) {
 		USphereComponent* TestSphere = Cast<USphereComponent>(OtherComp);
 
 		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) 
@@ -209,7 +209,7 @@ void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * Oth
 {
 	APlayerCharacter* TestPlayer = Cast<APlayerCharacter>(OtherActor);
 
-	if (TestPlayer && !TestPlayer->IsPendingKill()) 
+	if (TestPlayer && !TestPlayer->IsPendingKill() && isEnabled)
 	{
 		USphereComponent* TestSphere = Cast<USphereComponent>(OtherComp);
 
@@ -262,6 +262,25 @@ void AEnemyAiCharacter::SetID() {
 	}
 
 	UE_LOG(LogClass, Log, TEXT("Enemy ID: %d"), id);
+}
+
+void AEnemyAiCharacter::EnableCheck() {
+	Super::Enable();
+
+	EnemyInSight = false;
+
+	TArray<AActor*> CollectedActors;
+	GetCapsuleComponent()->GetOverlappingActors(CollectedActors);
+
+	for (int i = 0; i < CollectedActors.Num(); ++i) {
+		APlayerCharacter* TestPlayer = Cast<APlayerCharacter>(CollectedActors[i]);
+
+		if (TestPlayer && !TestPlayer->IsPendingKill()) {
+			TestPlayer->MyTakeDamage(energyDamage);
+			this->Disable();
+			this->Disabled();
+		}
+	}
 }
 
 void AEnemyAiCharacter::DoorOpened(int32 segmentt) {

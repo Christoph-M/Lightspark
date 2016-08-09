@@ -30,7 +30,7 @@ public:
 	void Disable();
 
 	UFUNCTION(BlueprintCallable, Category = "GoFuckYourself")
-	void Enable();
+	virtual void Enable();
 
 protected:
 	FORCEINLINE class ATriggeredActorSegmentDoor* GetSegmentDoor() const { return SegmentDoor; }

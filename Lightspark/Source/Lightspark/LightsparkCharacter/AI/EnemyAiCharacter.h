@@ -30,6 +30,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Sensing)
 		class USphereComponent* AttentionRadius;
+
+	UFUNCTION(BlueprintCallable, Category = "GoFuckYourself")
+	void EnableCheck();
 	
 protected:
 	UFUNCTION()
