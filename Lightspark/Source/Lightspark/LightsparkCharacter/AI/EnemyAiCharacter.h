@@ -44,6 +44,11 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Disabled")
 	void Disabled();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement", Meta = (BlueprintProtected = "true"))
+	float speedMultiplier;
+
+	float baseSpeed;
+
 private:
 	UFUNCTION()
 	virtual void EvaluateLightInteraction(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult) override;

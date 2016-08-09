@@ -33,6 +33,9 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 	AttentionRadius->AttachTo(GetCapsuleComponent());
 	AttentionRadius->SetSphereRadius(2000.0f);
 
+	speedMultiplier = 2.0f;
+	baseSpeed = GetCharacterMovement()->MaxFlySpeed;
+
 	EnemyInSight = false;	
 }
 
@@ -128,6 +131,7 @@ void AEnemyAiCharacter::OnSeePawn(APawn * OtherCharacter)
 	{
 		AICont->SetEnemy(OtherCharacter);
 		NotifyOtherEnemies(OtherCharacter);
+		GetCharacterMovement()->MaxFlySpeed = baseSpeed * speedMultiplier;
 		EnemyInSight = true;
 	}
 }
@@ -145,6 +149,7 @@ void AEnemyAiCharacter::NotifyOtherEnemies(APawn * Pawn)
 		{
 			AAI_Controller* OtherAICont = Cast<AAI_Controller>(OtherEnemy->GetController());
 			OtherAICont->SetEnemy(Pawn);
+			OtherEnemy->GetCharacterMovement()->MaxFlySpeed = baseSpeed * speedMultiplier;
 		}
 	}
 }
@@ -216,6 +221,7 @@ void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * Oth
 			{
 				AICont->SetEnemy(Character);
 				NotifyOtherEnemies(Character);
+				GetCharacterMovement()->MaxFlySpeed = baseSpeed * speedMultiplier;
 			}
 
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TOO CLOSE"));
