@@ -406,15 +406,14 @@ void APlayerCharacter::MoveRight(float Value)
 }
 
 
-void APlayerCharacter::MyTakeDamage() {
+void APlayerCharacter::MyTakeDamage(float damage) {
 	if (!lightFlashActive) {
 		if (characterEnergy <= 0.0f) {
 			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
 			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
 			characterEnergy = -0.1f;
-		}
-		else {
-			this->UseEnergy(hitEnergyDamage);
+		} else {
+			this->UseEnergy(damage);
 		}
 	}
 }

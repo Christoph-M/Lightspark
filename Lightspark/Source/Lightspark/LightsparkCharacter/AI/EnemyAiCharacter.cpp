@@ -146,7 +146,7 @@ void AEnemyAiCharacter::CheckPlayer(class AActor* OtherActor, class UPrimitiveCo
 	APlayerCharacter* const TestPlayer = Cast<APlayerCharacter>(OtherActor);
 
 	if (TestPlayer && !TestPlayer->IsPendingKill()) {
-		TestPlayer->MyTakeDamage();
+		TestPlayer->MyTakeDamage(3.0f);
 		this->Disable();
 	}
 }

@@ -247,6 +247,12 @@ void ALightsparkGameMode::SaveGame(FString const &slotName) {
 	UGameplayStatics::SaveGameToSlot(LightsparkSaveInstance, LightsparkSaveInstance->SaveSlotName + "_" + UGameplayStatics::GetCurrentLevelName(this), LightsparkSaveInstance->UserIndex);
 }
 
+void ALightsparkGameMode::DeleteSaveGame() {
+	ULightsparkSaveGame* SaveGame = Cast<ULightsparkSaveGame>(UGameplayStatics::LoadGameFromSlot("DefaultSlot_Segment_01_the_crypt", 0));
+	
+	if (SaveGame) UGameplayStatics::DeleteGameInSlot("DefaultSlot_Segment_01_the_crypt", 0);
+}
+
 template <typename ActorType>
 void ALightsparkGameMode::SaveNPCs(TArray<FNPCSaveData> &SaveDataList) {
 	int i = 0;

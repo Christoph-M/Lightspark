@@ -84,7 +84,7 @@ public:
 	FORCEINLINE class UPointLightComponent* GetLifeLight() const { return LifeLight; }
 
 	float GetCurrentMaxEnergy() { return currentMaxEnergy; }
-	void MyTakeDamage();
+	void MyTakeDamage(float);
 
 	int32 GetCurrentSegment() { return curSegment; }
 
