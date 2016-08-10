@@ -114,6 +114,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Light")
 	void SetMaxLightFlashUses(int32 maxCharges) { maxLightFlashUses = maxCharges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
 
+	UFUNCTION(BlueprintCallable, Category = "Light")
+	void Kill() { characterEnergy = -0.1f; }
+
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
 
@@ -184,6 +187,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StartLightFlash();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void LightFlash();
 
 	void CheckMovementInput(float deltaTime);
 

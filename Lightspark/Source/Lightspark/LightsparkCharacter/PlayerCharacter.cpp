@@ -699,6 +699,7 @@ void APlayerCharacter::StartLightFlash() {
 		UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 		initialAttenuationRadius = LifeLight->AttenuationRadius;
 		LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
+		this->LightFlash();
 	}
 }
 
