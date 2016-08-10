@@ -115,6 +115,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Light")
 	void UpdateLightFlashUses();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Light")
+	void StartCharge();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Light")
+	void StopCharge();
+
 	int32 GetMaxLightFlashUses() { return maxLightFlashUses; }
 
 	UFUNCTION(BlueprintCallable, Category = "Light")

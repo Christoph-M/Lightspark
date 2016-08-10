@@ -1005,6 +1005,8 @@ void APlayerCharacter::CheckInLight(class AActor* OtherActor, class UPrimitiveCo
 
 		isInShadow = false;
 
+		this->StartCharge();
+
 		UGameplayStatics::PlaySound2D(GetWorld(), soundRecharge);
 	}
 }
@@ -1026,6 +1028,8 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 	}
 
 	isInShadow = true;
+
+	this->StopCharge();
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
