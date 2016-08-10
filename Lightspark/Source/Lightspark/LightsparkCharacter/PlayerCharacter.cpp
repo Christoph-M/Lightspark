@@ -11,6 +11,7 @@
 #include "LightsparkCharacter/AI/EnemyAiCharacter.h"
 #include "LightsparkCharacter/AI/FriendlyAiCharacter.h"
 #include "LightsparkSaveGame.h"
+#include "SoundDefinitions.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -126,7 +127,18 @@ APlayerCharacter::APlayerCharacter() {
 	LifeLight->bUseInverseSquaredFalloff = false;
 	LifeLight->Intensity = 50.0f;
 	LifeLight->bUseTemperature = true;
-	
+
+	audioSprint = CreateDefaultSubobject<UAudioComponent>(TEXT("Sprint"));
+	audioSprint->AttachTo(RootComponent);
+
+	audioRecharge = CreateDefaultSubobject<UAudioComponent>(TEXT("Recharge"));
+	audioRecharge->AttachTo(RootComponent);
+
+	audioAmbient = CreateDefaultSubobject<UAudioComponent>(TEXT("Ambient"));
+	audioAmbient->AttachTo(RootComponent);
+
+	audioMusic = CreateDefaultSubobject<UAudioComponent>(TEXT("Music"));
+	audioMusic->AttachTo(RootComponent);
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -149,7 +161,7 @@ void APlayerCharacter::BeginPlay() {
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
 		maxLightFlashUses = PlayerLoadInstance->Player.maxLightFlashUses;
-		lightFlashUses = PlayerLoadInstance->Player.lightFlashUses;
+		this->SetLightFlashUses(PlayerLoadInstance->Player.lightFlashUses);
 
 		for (int i = 0; i < 4; ++i) {
 			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
@@ -161,7 +173,7 @@ void APlayerCharacter::BeginPlay() {
 	} else {
 		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
-		lightFlashUses = maxLightFlashUses;
+		this->SetLightFlashUses(maxLightFlashUses);
 	}
 	
 	lightEnergy = characterEnergy;
@@ -198,6 +210,11 @@ void APlayerCharacter::BeginPlay() {
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(DisplayTimerHandle, this, &APlayerCharacter::DisplayCurrentStates, 0.2f, true);
+
+	audioAmbient->SetSound(soundsAmbient[0]);
+	audioAmbient->Play();
+	audioMusic->SetSound(soundsMusic[0]);
+	audioMusic->Play();
 }
 
 void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
@@ -411,6 +428,8 @@ void APlayerCharacter::MyTakeDamage(float damage) {
 		if (characterEnergy <= 0.0f) {
 			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
 			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
+			this->StopLoopSound();
+			UGameplayStatics::PlaySound2D(GetWorld(), soundDeath);
 			characterEnergy = -0.1f;
 		} else {
 			this->UseEnergy(damage);
@@ -425,6 +444,18 @@ void APlayerCharacter::SetCurrentSegment(int32 segment) {
 		UE_LOG(LogClass, Log, TEXT("Segment changed. Current Segment: %d"), curSegment);
 		
 		segmentLit = Cast<ALightsparkGameMode>(GetWorld()->GetAuthGameMode())->IsDoorOpen(curSegment);
+
+		if (segment < soundsAmbient.Num()) {
+			audioAmbient->Stop();
+			audioAmbient->SetSound(soundsAmbient[segment]);
+			audioAmbient->Play();
+		}
+
+		if (segment < soundsMusic.Num()) {
+			audioMusic->Stop();
+			audioMusic->SetSound(soundsMusic[segment]);
+			audioMusic->Play();
+		}
 	}
 }
 
@@ -658,33 +689,50 @@ void APlayerCharacter::StopSneak() {
 
 
 void APlayerCharacter::StartLightFlash() {
-	if ((!lightFlashActive && lightFlashUses > 0) || segmentLit) {
+	if (!lightFlashActive && (lightFlashUses > 0 || segmentLit)) {
 		lightFlashActive = true;
 		this->StopSneak();
 		characterEnergy = maxEnergy;
 		*maxWalkSpeed = maxSprintSpeed;
 		lightFlashTime = 0.0f;
-		if (!segmentLit) --lightFlashUses;
+		if (!segmentLit) { --lightFlashUses; this->UpdateLightFlashUses(); };
 		UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 		initialAttenuationRadius = LifeLight->AttenuationRadius;
 		LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
+		this->LightFlash();
 	}
 }
 
 
 void APlayerCharacter::CheckMovementInput(float deltaTime) {
 	if (lightFlashActive) {
-		if (this->GetCurrentMovementState() != EMovementState::LightFlash)	this->SetCurrentMovementState(EMovementState::LightFlash);
+		if (this->GetCurrentMovementState() != EMovementState::LightFlash) {
+			this->SetCurrentMovementState(EMovementState::LightFlash);
+			this->StopLoopSound();
+			UGameplayStatics::PlaySound2D(GetWorld(), soundLightFlash);
+		}
 	} else if (GetVelocity().IsZero()) {
-		if (this->GetCurrentMovementState() != EMovementState::Default)		this->SetCurrentMovementState(EMovementState::Default);
+		if (this->GetCurrentMovementState() != EMovementState::Default) {
+			this->SetCurrentMovementState(EMovementState::Default);
+			this->StopLoopSound();
+		}
 	} else if (isJumping && jumpTime == 0.0f) {
-		if (this->GetCurrentMovementState() != EMovementState::Jump)		this->SetCurrentMovementState(EMovementState::Jump);
+		if (this->GetCurrentMovementState() != EMovementState::Jump) {
+			this->SetCurrentMovementState(EMovementState::Jump);
+			this->StopLoopSound();
+			UGameplayStatics::PlaySound2D(GetWorld(), soundsJump[FMath::RandRange(0, soundsJump.Num() - 1)]);
+		}
 	} else if (isJumping && canDoubleJump) {
 		if (this->GetCurrentMovementState() != EMovementState::DoubleJump)	this->SetCurrentMovementState(EMovementState::DoubleJump);
 	} else if (isJumping && isGliding && isFalling) {
 		if (this->GetCurrentMovementState() != EMovementState::JumpGlide)	this->SetCurrentMovementState(EMovementState::JumpGlide);
 	} else if (isJumping) {
 		if (this->GetCurrentMovementState() != EMovementState::Jumping)		this->SetCurrentMovementState(EMovementState::Jumping);
+	} else if (isSneaking) {
+		if (this->GetCurrentMovementState() != EMovementState::Sneak) {
+			this->SetCurrentMovementState(EMovementState::Sneak);
+			this->PlayLoopSound(soundSneak);
+		}
 	} else if (isSprinting && canDash) {
 		if (this->GetCurrentMovementState() != EMovementState::SprintDash)	this->SetCurrentMovementState(EMovementState::SprintDash);
 	} else if (isSprinting) {
@@ -692,7 +740,10 @@ void APlayerCharacter::CheckMovementInput(float deltaTime) {
 	} else if (*maxWalkSpeed > baseWalkSpeed) {
 		if (this->GetCurrentMovementState() != EMovementState::StopSprint)	this->SetCurrentMovementState(EMovementState::StopSprint);
 	} else {
-		if (this->GetCurrentMovementState() != EMovementState::Moving)		this->SetCurrentMovementState(EMovementState::Moving);
+		if (this->GetCurrentMovementState() != EMovementState::Moving) {
+			this->SetCurrentMovementState(EMovementState::Moving);
+			this->PlayLoopSound(soundSprint);
+		}
 	}
 }
 
@@ -716,6 +767,7 @@ void APlayerCharacter::EvaluateMovementState(float deltaTime) {
 			this->Decelerate(deltaTime, maxWalkSpeed, baseWalkSpeed); break;
 		case EMovementState::LightFlash:
 			this->LightFlash(deltaTime); break;
+		case EMovementState::Sneak: break;
 		default: UE_LOG(LogClass, Warning, TEXT("Movement State not set."));
 	}
 }
@@ -826,6 +878,16 @@ void APlayerCharacter::UseEnergy(float amount) {
 	}
 }
 
+void APlayerCharacter::PlayLoopSound(USoundWave* sound) {
+	this->StopLoopSound();
+	audioSprint->SetSound(sound);
+	audioSprint->Play();
+}
+
+void APlayerCharacter::StopLoopSound() {
+	if (audioSprint->IsPlaying()) audioSprint->Stop();
+}
+
 void APlayerCharacter::ActivateLightUpdate() {
 	if (CurrentLightUpdateState == ELightUpdateState::NoUpdate) {
 		lightEnergy = characterEnergy;
@@ -931,6 +993,8 @@ void APlayerCharacter::CheckInLight(class AActor* OtherActor, class UPrimitiveCo
 		UE_LOG(LogClass, Warning, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
 		isInShadow = false;
+
+		UGameplayStatics::PlaySound2D(GetWorld(), soundRecharge);
 	}
 }
 

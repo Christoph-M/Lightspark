@@ -19,7 +19,8 @@ enum class EMovementState {
 	Jumping,
 	DoubleJump,
 	JumpGlide,
-	LightFlash
+	LightFlash,
+	Sneak
 };
 
 UENUM(BlueprintType)
@@ -66,6 +67,18 @@ class LIGHTSPARK_API APlayerCharacter : public ALightsparkCharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
 	class UPointLightComponent* LifeLight;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioSprint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioRecharge;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioAmbient;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioMusic;
+
 	UCharacterMovementComponent* CharacterMovement;
 	
 public:
@@ -91,15 +104,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Segment")
 	void SetCurrentSegment(int32 segment);
 
+	UFUNCTION(BlueprintCallable, Category = "Light")
+	int32 PLightFlashUses() { if (lightFlashUses <= 3) return lightFlashUses - 1; else return 2; }
+
 	int32 GetLightFlashUses() { return lightFlashUses; }
 
 	UFUNCTION(BlueprintCallable, Category = "Light")
-	void SetLightFlashUses(int32 charges) { lightFlashUses += charges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
+	void SetLightFlashUses(int32 charges) { lightFlashUses += charges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; this->UpdateLightFlashUses(); }
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Light")
+	void UpdateLightFlashUses();
 
 	int32 GetMaxLightFlashUses() { return maxLightFlashUses; }
 
 	UFUNCTION(BlueprintCallable, Category = "Light")
 	void SetMaxLightFlashUses(int32 maxCharges) { maxLightFlashUses = maxCharges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
+
+	UFUNCTION(BlueprintCallable, Category = "Light")
+	void Kill() { characterEnergy = -0.1f; }
 
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EMovementState GetCurrentMovementState() { return CurrentMovementState; }
@@ -172,6 +194,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
 	void StartLightFlash();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Pawn|Character", meta = (BlueprintProtected = "true"))
+	void LightFlash();
+
 	void CheckMovementInput(float deltaTime);
 
 	void EvaluateMovementState(float deltaTime);
@@ -195,6 +220,10 @@ protected:
 	void LightFlash(float deltaTime);
 
 	void UseEnergy(float amount);
+
+	void PlayLoopSound(class USoundWave*);
+
+	void StopLoopSound();
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -506,6 +535,30 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
 	TArray<class AActor*> Checkpoints;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundDeath;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundLightFlash;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsJump;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundRecharge;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundSprint;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundSneak;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsAmbient;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsMusic;
 
 private:
 	/**

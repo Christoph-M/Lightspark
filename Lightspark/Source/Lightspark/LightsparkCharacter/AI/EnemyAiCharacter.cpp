@@ -11,6 +11,7 @@
 #include "LightsparkSaveGame.h"
 #include "Perception/PawnSensingComponent.h"
 #include "Lightspark/LightsparkCharacter/AI/AI_Controller.h"
+#include "SoundDefinitions.h"
 
 
 AEnemyAiCharacter::AEnemyAiCharacter() {
@@ -32,6 +33,10 @@ AEnemyAiCharacter::AEnemyAiCharacter() {
 	AttentionRadius = CreateDefaultSubobject<USphereComponent>(TEXT("AttentionRadius"));
 	AttentionRadius->AttachTo(GetCapsuleComponent());
 	AttentionRadius->SetSphereRadius(2000.0f);
+
+	audioHover = CreateDefaultSubobject<UAudioComponent>(TEXT("Hover"));
+	audioHover->AttachTo(RootComponent);
+	audioHover->SetSound(soundHover);
 
 	energyDamage = 3.0f;
 
@@ -102,6 +107,8 @@ void AEnemyAiCharacter::BeginPlay() {
 	if (!AttentionRadius->OnComponentBeginOverlap.IsAlreadyBound(this, &AEnemyAiCharacter::InAttRad)) {
 		AttentionRadius->OnComponentBeginOverlap.AddDynamic(this, &AEnemyAiCharacter::InAttRad);
 	}
+
+	audioHover->Play();
 }
 
 void AEnemyAiCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
@@ -131,6 +138,7 @@ void AEnemyAiCharacter::OnSeePawn(APawn * OtherCharacter)
 
 	if (OtherCharacter->IsA<ALightsparkCharacter>() && !EnemyInSight && isEnabled)
 	{
+		UGameplayStatics::PlaySound2D(GetWorld(), soundVisualContact);
 		AICont->SetEnemy(OtherCharacter);
 		NotifyOtherEnemies(OtherCharacter);
 		GetCharacterMovement()->MaxFlySpeed = baseSpeed * speedMultiplier;
@@ -188,6 +196,7 @@ void AEnemyAiCharacter::InAttRad(AActor * OtherActor, UPrimitiveComponent * Othe
 		if (TestSphere && !TestSphere->IsPendingKill() && TestSphere->ComponentHasTag("Light")) 
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("IN ATT RAD"));
+			UGameplayStatics::PlaySound2D(GetWorld(), soundAttention);
 		}
 	}
 
@@ -221,6 +230,7 @@ void AEnemyAiCharacter::InSensRad(AActor * OtherActor, UPrimitiveComponent * Oth
 
 			if (Character && !Character->IsPendingKill()) 
 			{
+				UGameplayStatics::PlaySound2D(GetWorld(), soundSense);
 				AICont->SetEnemy(Character);
 				NotifyOtherEnemies(Character);
 				GetCharacterMovement()->MaxFlySpeed = baseSpeed * speedMultiplier;
@@ -265,8 +275,6 @@ void AEnemyAiCharacter::SetID() {
 }
 
 void AEnemyAiCharacter::EnableCheck() {
-	Super::Enable();
-
 	EnemyInSight = false;
 
 	TArray<AActor*> CollectedActors;
