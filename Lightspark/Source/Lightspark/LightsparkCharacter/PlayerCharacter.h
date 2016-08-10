@@ -669,6 +669,7 @@ private:
 
 	float initialAttenuationRadius;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	bool lightFlashActive;
 
 
