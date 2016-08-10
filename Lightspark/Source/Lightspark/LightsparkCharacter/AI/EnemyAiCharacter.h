@@ -9,6 +9,10 @@ UCLASS()
 class LIGHTSPARK_API AEnemyAiCharacter : public AAiCharacter
 {
 	GENERATED_BODY()
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioHover;
 	
 public:
 	AEnemyAiCharacter();
@@ -54,6 +58,21 @@ protected:
 	float speedMultiplier;
 
 	float baseSpeed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsScream;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundHover;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundVisualContact;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundSense;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundAttention;
 
 private:
 	UFUNCTION()

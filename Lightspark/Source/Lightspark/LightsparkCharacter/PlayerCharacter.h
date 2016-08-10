@@ -19,7 +19,8 @@ enum class EMovementState {
 	Jumping,
 	DoubleJump,
 	JumpGlide,
-	LightFlash
+	LightFlash,
+	Sneak
 };
 
 UENUM(BlueprintType)
@@ -65,6 +66,18 @@ class LIGHTSPARK_API APlayerCharacter : public ALightsparkCharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
 	class UPointLightComponent* LifeLight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioSprint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioRecharge;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioAmbient;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lightspark", meta = (AllowPrivateAccess = "true"))
+	class UAudioComponent* audioMusic;
 
 	UCharacterMovementComponent* CharacterMovement;
 	
@@ -195,6 +208,10 @@ protected:
 	void LightFlash(float deltaTime);
 
 	void UseEnergy(float amount);
+
+	void PlayLoopSound(class USoundWave*);
+
+	void StopLoopSound();
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -506,6 +523,30 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "!AAAaaaAAAAAAAAAaaaAAAaaAAAAAAaaaAAAAAAAAAAAAAaaaaa", Meta = (BlueprintProtected = "true"))
 	TArray<class AActor*> Checkpoints;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundDeath;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundLightFlash;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsJump;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundRecharge;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundSprint;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	class USoundWave* soundSneak;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsAmbient;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds", Meta = (BlueprintProtected = "true"))
+	TArray<class USoundWave*> soundsMusic;
 
 private:
 	/**
