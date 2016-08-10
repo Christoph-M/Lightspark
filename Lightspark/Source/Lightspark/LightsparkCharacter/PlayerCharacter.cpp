@@ -427,7 +427,7 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::MyTakeDamage(float damage) {
 	if (!lightFlashActive && isInShadow) {
-		if (characterEnergy <= 0.0f) {
+		if (characterEnergy <= 0.0f || damage >= 10.0f) {
 			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
 			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
 			this->StopLoopSound();
@@ -1005,6 +1005,8 @@ void APlayerCharacter::CheckInLight(class AActor* OtherActor, class UPrimitiveCo
 
 		isInShadow = false;
 
+		this->StartCharge();
+
 		UGameplayStatics::PlaySound2D(GetWorld(), soundRecharge);
 	}
 }
@@ -1026,6 +1028,8 @@ void APlayerCharacter::CheckInShadow(class AActor * OtherActor, class UPrimitive
 	}
 
 	isInShadow = true;
+
+	this->StopCharge();
 }
 
 void APlayerCharacter::DisplayCurrentStates() {
