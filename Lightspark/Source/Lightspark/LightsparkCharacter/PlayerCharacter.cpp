@@ -427,7 +427,7 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::MyTakeDamage(float damage) {
 	if (!lightFlashActive && isInShadow) {
-		if (characterEnergy <= 0.0f) {
+		if (characterEnergy <= 0.0f || damage >= 10.0f) {
 			/*ALightsparkGameMode* GameMode = (ALightsparkGameMode*)GetWorld()->GetAuthGameMode();
 			GameMode->SetCurrentPlayState(ELightsparkPlayState::GameOver);*/
 			this->StopLoopSound();
