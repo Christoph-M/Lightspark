@@ -104,10 +104,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Segment")
 	void SetCurrentSegment(int32 segment);
 
+	UFUNCTION(BlueprintCallable, Category = "Light")
+	int32 PLightFlashUses() { if (lightFlashUses <= 3) return lightFlashUses - 1; else return 2; }
+
 	int32 GetLightFlashUses() { return lightFlashUses; }
 
 	UFUNCTION(BlueprintCallable, Category = "Light")
-	void SetLightFlashUses(int32 charges) { lightFlashUses += charges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; }
+	void SetLightFlashUses(int32 charges) { lightFlashUses += charges; if (lightFlashUses > maxLightFlashUses) lightFlashUses = maxLightFlashUses; this->UpdateLightFlashUses(); }
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Light")
+	void UpdateLightFlashUses();
 
 	int32 GetMaxLightFlashUses() { return maxLightFlashUses; }
 

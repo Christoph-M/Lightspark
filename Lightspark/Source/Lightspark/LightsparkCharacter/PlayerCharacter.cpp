@@ -161,7 +161,7 @@ void APlayerCharacter::BeginPlay() {
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
 		maxLightFlashUses = PlayerLoadInstance->Player.maxLightFlashUses;
-		lightFlashUses = PlayerLoadInstance->Player.lightFlashUses;
+		this->SetLightFlashUses(PlayerLoadInstance->Player.lightFlashUses);
 
 		for (int i = 0; i < 4; ++i) {
 			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
@@ -173,7 +173,7 @@ void APlayerCharacter::BeginPlay() {
 	} else {
 		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
-		lightFlashUses = maxLightFlashUses;
+		this->SetLightFlashUses(maxLightFlashUses);
 	}
 	
 	lightEnergy = characterEnergy;
@@ -695,7 +695,7 @@ void APlayerCharacter::StartLightFlash() {
 		characterEnergy = maxEnergy;
 		*maxWalkSpeed = maxSprintSpeed;
 		lightFlashTime = 0.0f;
-		if (!segmentLit) --lightFlashUses;
+		if (!segmentLit) { --lightFlashUses; this->UpdateLightFlashUses(); };
 		UE_LOG(LogClass, Log, TEXT("Light Flash Uses: %d"), lightFlashUses);
 		initialAttenuationRadius = LifeLight->AttenuationRadius;
 		LifeLight->Intensity = lightIntensityFactor * characterEnergy + minLightIntensity;
