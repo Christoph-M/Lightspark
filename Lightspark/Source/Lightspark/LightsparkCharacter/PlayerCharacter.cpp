@@ -161,7 +161,8 @@ void APlayerCharacter::BeginPlay() {
 		currentMaxEnergy = PlayerLoadInstance->Player.currentMaxEnergy;
 		characterEnergy = PlayerLoadInstance->Player.characterEnergy;
 		maxLightFlashUses = PlayerLoadInstance->Player.maxLightFlashUses;
-		this->SetLightFlashUses(PlayerLoadInstance->Player.lightFlashUses);
+		lightFlashUses = PlayerLoadInstance->Player.lightFlashUses;
+		this->UpdateLightFlashUses();
 
 		for (int i = 0; i < 4; ++i) {
 			this->SetSprintEmpowermentActive(i, PlayerLoadInstance->Player.SprintEmpowermentActive[i]);
@@ -173,7 +174,8 @@ void APlayerCharacter::BeginPlay() {
 	} else {
 		if (currentMaxEnergy > maxEnergy) currentMaxEnergy = maxEnergy;
 		if (characterEnergy > currentMaxEnergy) characterEnergy = currentMaxEnergy;
-		this->SetLightFlashUses(maxLightFlashUses);
+		lightFlashUses = 0;
+		this->UpdateLightFlashUses();
 	}
 	
 	lightEnergy = characterEnergy;
@@ -981,6 +983,15 @@ void APlayerCharacter::EvaluateLightInteraction(class AActor* OtherActor, class 
 		UE_LOG(LogClass, Log, TEXT("Interactable Name: %s"), *TestInteractable->GetName());
 
 		TestInteractable->CheckForCharacters();
+
+		return;
+	}
+	
+	ATriggeredActorSegmentDoor* TestDoor = Cast<ATriggeredActorSegmentDoor>(OtherActor);
+
+	if (TestDoor && !TestDoor->IsPendingKill() && !TestDoor->IsDoorOpen()) {
+		TestDoor->OpenDoor();
+		segmentLit = true;
 	}
 }
 
