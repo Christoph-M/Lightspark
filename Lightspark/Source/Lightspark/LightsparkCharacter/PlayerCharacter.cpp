@@ -308,17 +308,17 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* InputCom
 	InputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
 
 
-	InputComponent->BindAction("Checkpoint_0", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint0);
-	InputComponent->BindAction("Checkpoint_1", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint1);
-	InputComponent->BindAction("Checkpoint_2", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint2);
-	InputComponent->BindAction("Checkpoint_3", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint3);
-	InputComponent->BindAction("Checkpoint_4", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint4);
-	InputComponent->BindAction("Checkpoint_5", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint5);
-	InputComponent->BindAction("Checkpoint_6", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint6);
-	InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
-	InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
-	InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
-	InputComponent->BindAction("DisableEnergyLoss", IE_Pressed, this, &APlayerCharacter::ToggleEnergyLoss);
+	//InputComponent->BindAction("Checkpoint_0", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint0);
+	//InputComponent->BindAction("Checkpoint_1", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint1);
+	//InputComponent->BindAction("Checkpoint_2", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint2);
+	//InputComponent->BindAction("Checkpoint_3", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint3);
+	//InputComponent->BindAction("Checkpoint_4", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint4);
+	//InputComponent->BindAction("Checkpoint_5", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint5);
+	//InputComponent->BindAction("Checkpoint_6", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint6);
+	//InputComponent->BindAction("Checkpoint_7", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint7);
+	//InputComponent->BindAction("Checkpoint_8", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint8);
+	//InputComponent->BindAction("Checkpoint_9", IE_Pressed, this, &APlayerCharacter::TeleportToCheckpoint9);
+	//InputComponent->BindAction("DisableEnergyLoss", IE_Pressed, this, &APlayerCharacter::ToggleEnergyLoss);
 }
 
 void APlayerCharacter::ToggleEnergyLoss() {
